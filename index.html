@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fox Rocket Arena — Goal Explosion Garage + Directional Dodges</title>
+<title>Fox Rocket Arena — Aerial AI + Overtime</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -48,6 +48,20 @@
 .explosionChoice strong{font-size:13px;display:block;letter-spacing:.03em}
 .explosionChoice small{font-size:11px;display:block;margin-top:3px;color:#b1cbdd}
 @media(max-width:600px){.explosionGarage{grid-template-columns:repeat(2,minmax(0,1fr))}.explosionChoice{padding:10px 8px}}
+/* Post-match winner ceremony: centered, usable on computers and iPads. */
+#winnerScreen{position:fixed;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at center,#09243aec,#030a16f6);backdrop-filter:blur(8px)}
+#winnerScreen[hidden]{display:none!important}
+.winnerPanel{width:min(620px,100%);text-align:center;padding:clamp(24px,5vw,50px);border:2px solid #ffffff44;background:linear-gradient(160deg,#162b46,#081422);border-radius:28px;box-shadow:0 24px 100px #000a}
+.winnerEyebrow{font-size:14px;letter-spacing:.28em;font-weight:900;color:#ffcd81}
+#winnerTitle{font-size:clamp(38px,7vw,70px);line-height:1.07;margin:15px 0 10px;font-weight:1000;text-shadow:0 0 30px #56b5ff40}
+#winnerScore{font-size:34px;font-weight:900;color:#f4faff;margin:8px 0 22px;font-variant-numeric:tabular-nums}
+#winnerPlayers{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:14px 0 27px}
+.winnerPlayer{padding:15px 20px;border-radius:15px;background:#263e57;border:1px solid #6daacb66;min-width:105px;box-shadow:0 5px 16px #0006}
+.winnerPlayer b{display:block;font-size:21px}.winnerPlayer span{display:block;font-size:11px;color:#c6d5df;margin-top:4px;text-transform:uppercase;letter-spacing:.12em}
+.winnerActions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.winnerActions button{border:0;border-radius:12px;padding:14px 27px;background:#ff9c49;color:#101a25;font-size:16px;font-weight:900;cursor:pointer}
+.winnerActions button:last-child{background:#243e58;color:#eaf5ff;border:1px solid #aacce777}
+#overtimeBadge{font-size:14px;color:#ffe291;font-weight:1000;letter-spacing:.10em;display:none}
 /* Tab-only player identity. */
 .playerIdentity{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 17px;margin:0 0 21px;background:#0a1e31;border:1px solid #75baff58;border-radius:14px}
 .playerIdentity label{display:block;font-size:13px;font-weight:900;color:#e9f5ff;letter-spacing:.065em}
@@ -58,13 +72,17 @@
 #demoToast{position:absolute;top:160px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:14px;border:1px solid #ffde91a0;background:#1b1518e8;color:#ffe5b1;font-size:18px;font-weight:1000;letter-spacing:.04em;text-align:center;pointer-events:none;display:none;text-shadow:0 2px 5px #000;box-shadow:0 9px 25px #0009}#demoToast.downed{border-color:#ff7676;background:#350d18e8;color:#fff}#airRollState{margin-top:5px;padding-top:5px;border-top:1px solid #ffffff28;color:#b9d8ee;font-size:12px;letter-spacing:.035em}
 #airRollState.active{color:#ffe39a;text-shadow:0 0 9px #ffc051aa}
 </style></head><body>
-<div id="hud"><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="clock">3:00</span></div><div id="info"><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button><div id="banner"></div><div id="replayBadge">▶ GOAL REPLAY · <span id="replayScorer">GOAL!</span><small>0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP</small><div id="replayTrack"><div id="replayFill"></div></div></div></div>
+<div id="hud"><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="info"><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button><div id="banner"></div><div id="replayBadge">▶ GOAL REPLAY · <span id="replayScorer">GOAL!</span><small>0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP</small><div id="replayTrack"><div id="replayFill"></div></div></div></div>
+<div id="winnerScreen" hidden role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+ <div class="winnerPanel"><div class="winnerEyebrow">🏆 FINAL RESULT</div><div id="winnerTitle">WINNER!</div><div id="winnerScore">0 — 0</div><div id="winnerPlayers"></div>
+ <div class="winnerActions"><button type="button" id="playAgain">▶ PLAY AGAIN</button><button type="button" id="returnLobby">☰ BACK TO LOBBY</button></div></div>
+</div>
 <div id="warning"><div><h2>3D renderer couldn't load</h2><p>This game uses Three.js from a CDN. Connect to the internet, then refresh the page. Serve it with <code>python3 -m http.server 8000</code> and open <a href="http://localhost:8000">localhost:8000</a>.</p></div></div>
 <div id="lobby" role="dialog" aria-modal="true" aria-labelledby="lobbyTitle">
  <div class="lobbyPanel">
   <div class="lobbyEyebrow">WELCOME TO THE ARENA</div>
   <h1 class="lobbyTitle" id="lobbyTitle">FOX <em>ROCKET ARENA</em></h1>
-  <p class="lobbySub">BIGGER ARENA · ENLARGED GOALS · SUPERSONIC DEMOLITIONS! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
+  <p class="lobbySub">ADVANCED AERIAL AI · 1:30 OVERTIME FOR TIED GAMES · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
   <div class="playerIdentity">
    <div><label for="playerName">YOUR PLAYER NAME</label><p>Appears above your car and when you score. Saved until this browser tab closes.</p></div>
    <input id="playerName" name="playerName" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="16" placeholder="Enter your name" value="YOU" aria-label="Your player name">
@@ -551,6 +569,7 @@ let pads=[];const padMat=new THREE.MeshStandardMaterial({color:0xffae28,emissive
 let onlineActive=false,onlineConnecting=false,onlineWS=null,onlineSlot=-1,onlineRoom='',onlineLatest=null;
 let onlineModels=new Map(),onlineInputClock=0,onlineLastGoalId=0,onlineLastPhase='play',onlineReplayExplosion=null;
 const keys={};let ballCam=true;let jumpQueued=false;let paused=false,finished=false,time=180,score=[0,0],bannerTime=0,goalPause=0;
+let overtime=false,otExtra=0,pendingWinner=null;
 // Record recent gameplay for automatic slow-motion replays after every goal.
 const REPLAY_WINDOW=9.5,REPLAY_RATE=.70,REPLAY_FPS=30;
 let replayHistory=[],replayClock=0,lastReplaySample=-Infinity;
@@ -845,7 +864,7 @@ function kickoff(){
  Object.assign(player,{x:0,z:FL*.63,y:0,vx:0,vz:0,vy:0,a:0,onGround:true,wall:null,wallHeight:0,boost:100,jumps:0,airTime:0,flipLeft:0});
  player.q.setFromAxisAngle(UP,0);
  for(const b of allBots){
-  Object.assign(b,{x:b.spawnX,z:b.spawnZ,y:0,vx:0,vz:0,vy:0,a:b.team===0?0:Math.PI,onGround:true,wall:null,wallHeight:0,boost:100,jumps:0,airTime:0,flipLeft:0});
+  Object.assign(b,{x:b.spawnX,z:b.spawnZ,y:0,vx:0,vz:0,vy:0,a:b.team===0?0:Math.PI,onGround:true,wall:null,wallHeight:0,boost:100,jumps:0,airTime:0,flipLeft:0,aiAirCooldown:0,aiFlight:false,aiAirDribble:false});
   b.q.setFromAxisAngle(UP,-b.a);
  }
  for(const c of [player,...allBots]){
@@ -858,7 +877,8 @@ function kickoff(){
  lastTouch=null;replayHistory=[];replayClock=0;lastReplaySample=-Infinity;captureReplayFrame(true);
 }
 function restart(){
- clearExplosions();clearDemoEffects();score=[0,0];time=180;finished=false;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];
+ clearExplosions();clearDemoEffects();score=[0,0];time=180;overtime=false;otExtra=0;pendingWinner=null;finished=false;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];
+ document.getElementById('winnerScreen').hidden=true;
  document.getElementById('lastScorer').style.display='none';
  document.getElementById('replayBadge').style.display='none';show('',0);kickoff();
  training.attempts=0;training.success=0;training.wait=0;training.variant=0;training.active=false;
@@ -868,6 +888,7 @@ function restart(){
 }
 function openLobby(){
  leaveOnline();
+ document.getElementById('winnerScreen').hidden=true;pendingWinner=null;overtime=false;otExtra=0;
  inLobby=true;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;pendingReplay=[];training.active=false;training.wait=0;
  clearExplosions();clearDemoEffects();show('',0);Object.keys(keys).forEach(k=>keys[k]=false);
  document.getElementById('replayBadge').style.display='none';
@@ -883,7 +904,8 @@ function startMatch(){
 }
 function updateHud(){
  document.getElementById('orange').textContent=score[0];document.getElementById('blue').textContent=score[1];
- let t=Math.ceil(time);document.getElementById('clock').textContent=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+ let t=Math.ceil(overtime&&time<=0?otExtra:time);document.getElementById('clock').textContent=(overtime&&time<=0?'+':'')+`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+ document.getElementById('overtimeBadge').style.display=overtime?'inline':'none';
  const isTraining=typeof mode==='string';
  document.getElementById('top').style.display=isTraining?'none':'flex';
  document.getElementById('modeHud').style.display=isTraining?'none':'block';
@@ -979,11 +1001,38 @@ function goal(team){
  document.getElementById('lastScorer').style.display='block';
  document.getElementById('replayScorer').textContent=replayScorerText;
  score[team]++;
+ if(overtime)pendingWinner=team; // Golden goal; show the winner AFTER the goal replay.
  createGoalExplosion(team,ball.x,ball.y,ball.z);
  ballMesh.visible=false;
  for(const c of [player,...activeBots]){c.vx=c.vy=c.vz=0;c.flame.visible=false;}
  show(replayScorerText,1.7);
  goalPause=1.7; // Explosion first, then cinematic slow-motion replay.
+ updateHud();
+}
+// Regulation tie (including 0-0) starts a 90-second golden-goal overtime.
+// If both sides survive the full 90 seconds, the clock counts upward in
+// sudden death until somebody scores: we always have a real winner.
+function startOvertime(){
+ overtime=true;otExtra=0;time=90;show('OVERTIME · NEXT GOAL WINS!',3);
+ updateHud();
+}
+function finishMatch(team){
+ finished=true;pendingWinner=null;goalPause=0;replayActive=false;
+ show('',0);
+ const label=team===0?'ORANGE TEAM':'BLUE TEAM';
+ const names=team===0?[player,...activeBots.filter(bot=>bot.team===0)]:activeBots.filter(bot=>bot.team===1);
+ const title=document.getElementById('winnerTitle');
+ title.textContent=label+' WINS!';title.style.color=team===0?'#ffad64':'#78cbff';
+ document.getElementById('winnerScore').textContent=score[0]+' — '+score[1]+(overtime?' · OT':'');
+ const podium=document.getElementById('winnerPlayers');podium.replaceChildren();
+ for(const c of names){
+  const card=document.createElement('div');card.className='winnerPlayer';
+  const name=document.createElement('b');name.textContent=c.name;
+  name.style.color=team===0?'#ffd1a7':'#a9dfff';
+  const caption=document.createElement('span');caption.textContent=c===player?'YOU · MVP':c.role==='defender'?'DEFENDER':c.role==='support'?'SUPPORT':'STRIKER';
+  card.append(name,caption);podium.append(card);
+ }
+ document.getElementById('winnerScreen').hidden=false;
  updateHud();
 }
 function captureReplayFrame(force=false){
@@ -1059,7 +1108,9 @@ function finishReplay(){
  replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];replayFrames=[];goalPause=0;
  document.getElementById('replayBadge').style.display='none';
  document.querySelector('#replayBadge small').textContent='0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP';
- clearExplosions();kickoff();show('',0);cameraReady=false;updateHud();
+ clearExplosions();
+ if(pendingWinner!==null){finishMatch(pendingWinner);return;}
+ kickoff();show('',0);cameraReady=false;updateHud();
 }
 // Nearest curved boundary: signed horizontal distance s from the quarter-pipe foot.
 // Positive s means we are entering the ramp; normal points toward the boards.
@@ -1369,58 +1420,93 @@ function updateBall(dt){
 }
 // Tactical AI: intercept projected ball path, take the correct side of the
 // ball, defend the goal line, and avoid clearing into its own net.
+// AI tactics: prediction, goal-side defense, boost, aerial interception and
+// occasional wall-to-air-dribbles. All actions use the same player physics.
 function aiControl(c,dt){
  if(c.demoTimer>0)return;
- const attack=c.team===0?-1:1; // sign of the opponent's goal
+ c.aiAirCooldown=Math.max(0,(c.aiAirCooldown||0)-dt);
+ const attack=c.team===0?-1:1; // positive toward the opponent's net
  const home=-attack;
  const dx=ball.x-c.x,dz=ball.z-c.z;
  const distance=Math.hypot(dx,dz);
- const lead=clamp(distance/470,.09,.82);
+ const lead=clamp(distance/520,.10,.70);
  const bx=clamp(ball.x+ball.vx*lead,-FW+RAMP_RADIUS+ball.r+10,FW-RAMP_RADIUS-ball.r-10);
  const bz=clamp(ball.z+ball.vz*lead,-FL+RAMP_RADIUS+ball.r+20,FL-RAMP_RADIUS-ball.r-20);
- const ownDanger=bz*home>FL*.46;
- const urgent=bz*home>FL*.73 || (bz*home>FL*.38&&ball.vz*home>125);
- // Shoot toward the center of the opposing goal, not simply toward the ball.
- const aimX=clamp(-bx*.30,-GW*.65,GW*.65);
+ const predictedY=clamp(ball.y+ball.vy*lead-230*lead*lead,ball.r,ROOF_Y-60);
+ const ownDanger=bz*home>FL*.43;
+ const urgent=bz*home>FL*.70||(bz*home>FL*.38&&ball.vz*home>120);
+ const nearWall=Math.abs(ball.x)>FW-RAMP_RADIUS-145||Math.abs(ball.z)>FL-RAMP_RADIUS-130;
+ // A defensive interception must send the ball toward midfield.
+ const aimX=ownDanger?clamp(-bx*.55,-GW*.8,GW*.8):clamp(-bx*.3,-GW*.65,GW*.65);
  const dirX=aimX-bx,dirZ=attack*FL-bz;
  const shotLength=Math.hypot(dirX,dirZ)||1;
  const ux=dirX/shotLength,uz=dirZ/shotLength;
  const standoff=ball.r+46+(distance>320?35:10);
  const behindX=clamp(bx-ux*standoff,-FW+RAMP_RADIUS+35,FW-RAMP_RADIUS-35);
  const behindZ=clamp(bz-uz*standoff,-FL+RAMP_RADIUS+38,FL-RAMP_RADIUS-38);
+ const wrongSide=(c.z-bz)*attack>ball.r+15;
+
+ // Once airborne, continue flying at an intercepted future ball position.
+ // Point the nose upward to boost into aerials; ease off when near a touch,
+ // making short, repeatable contacts possible for air dribbles.
+ if(!c.onGround&&!c.wall){
+  const approach=clamp(distance/750,.08,.46);
+  const px=clamp(ball.x+ball.vx*approach,-FW+45,FW-45);
+  const pz=clamp(ball.z+ball.vz*approach,-FL+45,FL-45);
+  const py=clamp(ball.y+ball.vy*approach-230*approach*approach+10,ball.r+8,ROOF_Y-60);
+  const hx=px-c.x,hz=pz-c.z,hd=Math.hypot(hx,hz);
+  const desiredYaw=Math.atan2(hx,-hz);
+  const yawError=angleDiff(desiredYaw,c.a);
+  const forward=tmpForward.copy(FORWARD).applyQuaternion(c.q);
+  const pitch=Math.asin(clamp(forward.y,-1,1));
+  const wantedPitch=clamp(Math.atan2(py-(c.y+19),Math.max(35,hd)),-.45,1.36);
+  const pitchInput=-clamp((wantedPitch-pitch)*2.0,-1,1);
+  const ballDist=Math.hypot(hx,hz,py-c.y);
+  const alignment=forward.x*hx/Math.max(1,ballDist)+forward.y*(py-c.y)/Math.max(1,ballDist)+forward.z*hz/Math.max(1,ballDist);
+  const canThrust=c.boost>4&&alignment>.55&&(ballDist>ball.r+45||c.y+25<py);
+  driving(c,pitchInput,clamp(yawError*1.65,-1,1),canThrust,dt);
+  // One extra hop when it will help connect with an elevated ball.
+  if(c.jumps===1&&c.airTime>.26&&c.airTime<.95&&ballDist<145&&py>c.y+60)jump(c);
+  return;
+ }
+
+ // Air dribble attempt: follow a rolling ball up the rounded wall, then jump
+ // away from the wall and boost toward it. Otherwise return to the field.
+ if(c.wall){
+  const onWallBall=nearWall&&distance<280&&ball.y>RAMP_RADIUS*.7&&ball.y<WH-40;
+  if(onWallBall){
+    const heading=Math.atan2(ball.x-c.x,-(ball.z-c.z));
+    const turn=angleDiff(heading,c.a);
+    driving(c,1,clamp(turn*1.9,-1,1),c.boost>12&&Math.abs(turn)<.45,dt);
+    if(c.y>RAMP_RADIUS*.75&&Math.abs(ball.y-c.y)<105&&distance<155&&c.aiAirCooldown===0){
+      jump(c);c.aiAirCooldown=1.7;c.aiAirDribble=true;
+    }
+  }else{
+    const homeward=Math.atan2(-c.wall.nx,c.wall.nz);
+    const safeAngle=angleDiff(homeward,c.a);
+    driving(c,.9,clamp(safeAngle*2,-1,1),false,dt);
+    if(c.y>RAMP_RADIUS+70&&Math.abs(safeAngle)<.25){jump(c);c.aiAirCooldown=1.0;}
+  }
+  return;
+ }
+
  let tx=behindX,tz=behindZ;
  if(c.role==='defender'&&!urgent){
-  // A dedicated goalie holds a useful goal-side position and challenges
-  // only when the ball enters the defensive third.
-  const goalLine=home*(FL-140);
-  const dangerLane=clamp(bx*.75,-GW+38,GW-38);
-  if(ownDanger){
-   tx=behindX;tz=behindZ;
-  }else{
-   tx=dangerLane;
-   tz=goalLine;
-  }
- }else if(c.role==='support'&&!urgent){
-  // Support occupies a passing lane rather than crowding the striker.
-  if(distance>175){
-   tx=clamp(bx+(c.team===0?-145:145),-FW+RAMP_RADIUS+50,FW-RAMP_RADIUS-50);
-   tz=clamp(bz-home*100,-FL+RAMP_RADIUS+45,FL-RAMP_RADIUS-45);
-  }
+  // Hold goal-side unless the ball is in the defensive third.
+  if(!ownDanger){tx=clamp(bx*.75,-GW+38,GW-38);tz=home*(FL-145);}
+ }else if(c.role==='support'&&!urgent&&distance>175){
+  const side=c.name==='ACE'?1:-1;
+  tx=clamp(bx+side*175,-FW+RAMP_RADIUS+50,FW-RAMP_RADIUS-50);
+  tz=clamp(bz-home*110,-FL+RAMP_RADIUS+45,FL-RAMP_RADIUS-45);
  }
- // Never charge THROUGH the ball when between it and the opponent's goal.
- // Swing round the side first, then drive forward from the safe goal-side lane.
- const wrongSide=(c.z-bz)*attack>ball.r+15;
- if(wrongSide&&distance<500){
+ // Recover the ball from goal side, not by bulldozing it toward our own net.
+ if(wrongSide&&distance<500&&!urgent){
   const preferredSide=Math.sign(c.x-bx)||((c.name.length%2)?1:-1);
-  const sideX=-uz,sideZ=ux;
-  const clearance=ball.r+115;
-  tx=clamp(behindX+sideX*clearance*preferredSide,-FW+RAMP_RADIUS+30,FW-RAMP_RADIUS-30);
-  tz=clamp(behindZ+sideZ*clearance*preferredSide,-FL+RAMP_RADIUS+35,FL-RAMP_RADIUS-35);
+  const clearance=ball.r+130;
+  tx=clamp(behindX-uz*clearance*preferredSide,-FW+RAMP_RADIUS+30,FW-RAMP_RADIUS-30);
+  tz=clamp(behindZ+ux*clearance*preferredSide,-FL+RAMP_RADIUS+35,FL-RAMP_RADIUS-35);
  }
- // Defenders use the emergency route only when a shot is actually dangerous;
- // they recover to the safe (goal-side) position instead of own-goaling.
- if(urgent&&c.role==='defender'){tx=behindX;tz=behindZ;}
- // Avoid body-blocking other cars while remaining near the assigned lane.
+ if(urgent){tx=behindX;tz=behindZ;}
  for(const other of [player,...activeBots]){
   if(other===c||other.demoTimer>0)continue;
   const ox=tx-other.x,oz=tz-other.z,d2=ox*ox+oz*oz;
@@ -1428,28 +1514,35 @@ function aiControl(c,dt){
  }
  tx=clamp(tx,-FW+RAMP_RADIUS+25,FW-RAMP_RADIUS-25);
  tz=clamp(tz,-FL+RAMP_RADIUS+32,FL-RAMP_RADIUS-32);
- // Brake for hard turns, accelerate on straight lines, boost on long chases.
  const desired=Math.atan2(tx-c.x,-(tz-c.z));
  const angle=angleDiff(desired,c.a);
  const range=Math.hypot(tx-c.x,tz-c.z);
  const absAngle=Math.abs(angle);
- let throttle=range<28?.08:absAngle>2.3?-.35:absAngle>1.25?.24:1;
- if(wrongSide&&distance<ball.r+95)throttle=Math.min(throttle,.14);
- const boosting=absAngle<.22&&range>230&&c.boost>20&&!wrongSide;
- // If an AI is on a wall, steer toward the field and drive back down.
- if(c.wall&&c.y>RAMP_RADIUS*.85){
-  const homeward=Math.atan2(-c.wall.nx,c.wall.nz);
-  const safeAngle=angleDiff(homeward,c.a);
-  driving(c,.75,clamp(safeAngle*2,-1,1),false,dt);
-  if(c.y>RAMP_RADIUS+50&&Math.abs(safeAngle)<.3)jump(c);
-  return;
- }
- driving(c,throttle,clamp(angle*1.9,-1,1),boosting,dt);
- // Aerial challenges only when already in a good shooting/clearing position.
- if(c.onGround&&distance<ball.r+80&&ball.y>ball.r+28&&ball.y<160
-    &&!wrongSide&&((ball.z-c.z)*attack>10||ownDanger))jump(c);
-}
+ const throttle=range<30?.12:absAngle>2.25?-.42:absAngle>1.3?.30:1;
+ const usefulChase=!wrongSide||urgent;
+ // Use boost for open-field interceptions, defensive emergencies and straight
+ // approaches to aerial launch positions, but save some for flying.
+ const boost=usefulChase&&c.boost>14&&absAngle<.42&&
+   (range>205||urgent&&range>95||nearWall&&range>135)&&throttle>.55;
+ driving(c,throttle,clamp(angle*2.05,-1,1),boost,dt);
 
+ // Takeoffs: clear elevated shots near the home goal, jump for attacking
+ // aerials, or follow a ball rising up the curved wall. Limit bot launches
+ // with cooldown so they do not hop constantly under the ball.
+ const airborneBall=predictedY>ball.r+40||ball.y>ball.r+55;
+ const launchRange=urgent?560:410;
+ const heightEnough=predictedY<ROOF_Y-65;
+ const chaseReady=distance>65&&distance<launchRange&&absAngle<.72&&usefulChase;
+ const wantsAir=c.role!=='defender'||ownDanger||urgent;
+ if(c.onGround&&c.aiAirCooldown===0&&c.boost>11&&airborneBall&&heightEnough&&chaseReady&&wantsAir){
+  jump(c);
+  rot.setFromAxisAngle(RIGHT,clamp(Math.atan2(predictedY-25,Math.max(90,distance))+.12,.3,1.10));
+  c.q.multiply(rot).normalize();
+  c.aiAirCooldown=2.4;c.aiFlight=true;c.aiAirDribble=nearWall;
+ }else if(c.onGround&&c.aiAirCooldown===0&&distance<ball.r+70&&ball.y>ball.r+25&&urgent){
+  jump(c);c.aiAirCooldown=1.8;
+ }
+}
 // Continuous (swept) hit detection: check the path both cars traveled THIS frame,
 // not just their final positions. Prevents high-speed cars driving through opponents.
 function carCollisionContact(a,b,previous){
@@ -1533,7 +1626,15 @@ if((mode==='shots'||mode==='saves')&&!training.active){
 replayClock+=dt;
 updateDemoState(dt);
 if(typeof mode==='number'){
- time=Math.max(0,time-dt);if(time===0){finished=true;show(score[0]>score[1]?'YOUR TEAM WINS!':score[1]>score[0]?'BLUE TEAM WINS!':'DRAW!');updateHud();return;}
+ if(time>0){
+   time=Math.max(0,time-dt);
+   if(time===0){
+     if(!overtime){
+       if(score[0]===score[1])startOvertime();
+       else {finishMatch(score[0]>score[1]?0:1);return;}
+     }else{show('SUDDEN DEATH · NEXT GOAL WINS!',2.2);}
+   }
+ }else if(overtime){otExtra+=dt;}
 }else if(mode!=='free'){
  training.elapsed+=dt;
  if(training.elapsed>training.limit){finishTrainingAttempt(false,mode==='shots'?'SHOT MISSED · TRY AGAIN':'SHOT NOT SAVED');return;}
@@ -1647,6 +1748,8 @@ playerNameInput.addEventListener('blur',()=>{
  savePlayerName(name);
 });
 document.getElementById('startGame').addEventListener('click',startMatch);
+document.getElementById('playAgain').addEventListener('click',startMatch);
+document.getElementById('returnLobby').addEventListener('click',openLobby);
 document.getElementById('lobbyButton').addEventListener('click',openLobby);
 // -------------------------------------------------------------
 // ONLINE MULTIPLAYER: server-authoritative state, AI fill, replays.
