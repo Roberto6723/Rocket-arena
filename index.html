@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fox Rocket Arena — Aerial AI + Overtime</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fox Rocket Arena — Mobile Controls & Advanced AI</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -71,8 +71,100 @@
 @media(max-width:520px){.playerIdentity{flex-direction:column;align-items:stretch}#playerName{width:100%}}
 #demoToast{position:absolute;top:160px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:14px;border:1px solid #ffde91a0;background:#1b1518e8;color:#ffe5b1;font-size:18px;font-weight:1000;letter-spacing:.04em;text-align:center;pointer-events:none;display:none;text-shadow:0 2px 5px #000;box-shadow:0 9px 25px #0009}#demoToast.downed{border-color:#ff7676;background:#350d18e8;color:#fff}#airRollState{margin-top:5px;padding-top:5px;border-top:1px solid #ffffff28;color:#b9d8ee;font-size:12px;letter-spacing:.035em}
 #airRollState.active{color:#ffe39a;text-shadow:0 0 9px #ffc051aa}
+
+/* iPad, phone and desktop: accessible side-drawer instructions and multi-touch controls. */
+/* Safe scroll anchoring matters on iPad: vertically centering a very tall
+   lobby previously placed the name editor above the reachable scroll area. */
+#lobby{align-items:flex-start;justify-content:center}
+.lobbyPanel{margin:auto 0}
+#hud{z-index:12}
+#helpToggle{position:absolute;top:123px;left:12px;z-index:5;pointer-events:auto;border:1px solid #82bfff99;background:#071c31e8;color:#eff9ff;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:900;cursor:pointer;touch-action:manipulation}
+#info{top:173px;left:12px;max-height:min(67vh,550px);overflow-y:auto;overscroll-behavior:contain;pointer-events:auto;z-index:5;box-shadow:0 6px 26px #0009;border:1px solid #92d6ff43}
+#info[hidden]{display:none!important}
+#touchControls{display:none;position:absolute;inset:auto 0 max(7px,env(safe-area-inset-bottom)) 0;justify-content:space-between;align-items:end;gap:15px;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));pointer-events:none;z-index:6;user-select:none;-webkit-user-select:none}
+#touchControls .touchCluster{pointer-events:auto;display:flex;gap:9px;align-items:end;touch-action:none}
+#touchControls .touchDpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);gap:6px;align-items:center;justify-items:center}
+#touchControls button{border:1.5px solid #ffffff77;border-radius:15px;min-width:56px;min-height:56px;color:white;background:#092943e3;box-shadow:0 3px 13px #000a;font-size:13px;line-height:1.15;font-weight:900;touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;-webkit-user-select:none}
+#touchControls button:active,#touchControls button.pressed{background:#f28525ee;border-color:#ffea9d;color:#111e2c;transform:scale(.96)}
+#touchControls .touchUp{grid-column:2;grid-row:1}
+#touchControls .touchLeft{grid-column:1;grid-row:2}
+#touchControls .touchDown{grid-column:2;grid-row:2}
+#touchControls .touchRight{grid-column:3;grid-row:2}
+#touchControls .touchActions{display:grid;grid-template-columns:repeat(3,minmax(54px,65px));gap:6px}
+#touchControls .touchActions button{min-width:0;min-height:52px}
+#touchControls .touchActions button[data-key="shift"],#touchControls .touchActions button[data-key="f"]{background:#7e4016e8}
+#touchControls .touchActions button.pressed{background:#ffc15e}
+#touchControls .touchLabel{color:#d1e9fb;letter-spacing:.03em;text-shadow:0 2px 5px #000c;font-size:11px;font-weight:850;text-align:center;margin-bottom:5px}
+#touchControls .touchTools{display:flex;gap:5px;justify-content:flex-end;margin-bottom:7px}
+#touchControls .touchTools button{min-height:35px;min-width:44px;font-size:11px;padding:4px 7px}
+#touchControls button[hidden]{display:none!important}
+#saveName{background:#21668d;color:white;border:1px solid #7ed4ff;border-radius:10px;padding:12px 17px;font-size:15px;font-weight:900;min-height:48px;touch-action:manipulation;cursor:pointer}
+#nameSaved{display:block;font-size:12px;color:#8be2bc;min-height:18px;margin-top:4px}
+#playerName{font-size:18px;min-height:50px;touch-action:manipulation;user-select:text;-webkit-user-select:text}
+.nameInputs{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:185px;flex:1;max-width:340px}
+.nameButtons{display:flex;gap:8px;align-items:center}
+@media(pointer:coarse){
+ #touchControls{display:flex}
+ #info{top:120px;bottom:auto;left:8px;max-height:50vh;max-width:min(330px,77vw)}
+ #helpToggle{top:75px;left:9px;padding:8px 10px;font-size:12px}
+ #camState{display:none}
+ #flight{top:137px}
+ #boost{top:73px;bottom:auto;right:10px;width:113px;padding:7px 10px;font-size:11px}
+ #flight{top:115px;bottom:auto;left:auto;right:9px;font-size:10px;max-width:160px;padding:7px;line-height:1.3}
+ #modeHud{top:72px}
+ #lobbyButton{top:9px;right:9px}
+ .lobbyPanel{padding:18px}
+ .playerIdentity{align-items:stretch;flex-wrap:wrap}
+ .nameInputs{max-width:none;min-width:175px}
+ #playerName{width:100%;max-width:none}
+}
+@media(pointer:coarse) and (max-height:520px){
+ #touchControls .touchDpad{grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,45px);gap:4px}
+ #touchControls button{min-width:45px;min-height:45px;font-size:11px;border-radius:11px}
+ #touchControls .touchActions{grid-template-columns:repeat(3,49px);gap:4px}
+ #touchControls .touchActions button{min-height:42px}
+ #touchControls .touchTools button{min-height:29px}
+ #flight{display:none}
+}
+@media(pointer:coarse) and (max-width:580px){
+ #touchControls{padding-left:5px;padding-right:5px;gap:5px}
+ #touchControls .touchDpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,48px);gap:4px}
+ #touchControls button{min-width:46px;min-height:48px;font-size:11px;border-radius:12px}
+ #touchControls .touchActions{grid-template-columns:repeat(3,48px);gap:4px}
+ #touchControls .touchActions button{min-height:47px}
+ #helpToggle{top:58px}
+ #info{top:98px}
+ #boost{top:90px}
+ #flight{display:none}
+ #lobbyButton{top:9px}
+ .lobbyPanel{padding:16px;border-radius:16px}
+}
 </style></head><body>
-<div id="hud"><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="info"><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button><div id="banner"></div><div id="replayBadge">▶ GOAL REPLAY · <span id="replayScorer">GOAL!</span><small>0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP</small><div id="replayTrack"><div id="replayFill"></div></div></div></div>
+<div id="hud"><button id="helpToggle" type="button" aria-controls="info" aria-expanded="false">❔ CONTROLS</button><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="info" hidden><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button>
+<div id="touchControls" aria-label="Touch game controls">
+  <div class="touchCluster"><div>
+   <div class="touchLabel">DRIVE / DODGE</div>
+   <div class="touchDpad">
+     <button class="touchUp" data-key="arrowup" aria-label="Forward">▲</button>
+     <button class="touchLeft" data-key="arrowleft" aria-label="Turn left">◀</button>
+     <button class="touchDown" data-key="arrowdown" aria-label="Reverse / pitch up">▼</button>
+     <button class="touchRight" data-key="arrowright" aria-label="Turn right">▶</button>
+   </div></div></div>
+  <div class="touchCluster"><div>
+   <div class="touchTools">
+    <button data-action="ballcam" aria-label="Toggle ball camera">🎥 CAM ON</button>
+    <button data-action="skip" aria-label="Skip goal replay">SKIP</button>
+    <button data-action="practice" aria-label="Next drill or setup wall dribble">DRILL</button>
+   </div>
+   <div class="touchActions">
+     <button data-key="z" aria-label="Air roll left">↶ ROLL</button>
+     <button data-key=" " aria-label="Jump and directional dodge">JUMP</button>
+     <button data-key="x" aria-label="Air roll right">ROLL ↷</button>
+     <button data-key="f" aria-label="Automatic aerial">🚀 FLY</button>
+     <button data-key="shift" aria-label="Hold to boost">BOOST</button>
+     <button data-action="pause" aria-label="Pause or resume game">⏸ PAUSE</button>
+   </div></div></div>
+</div><div id="banner"></div><div id="replayBadge">▶ GOAL REPLAY · <span id="replayScorer">GOAL!</span><small>0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP</small><div id="replayTrack"><div id="replayFill"></div></div></div></div>
 <div id="winnerScreen" hidden role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
  <div class="winnerPanel"><div class="winnerEyebrow">🏆 FINAL RESULT</div><div id="winnerTitle">WINNER!</div><div id="winnerScore">0 — 0</div><div id="winnerPlayers"></div>
  <div class="winnerActions"><button type="button" id="playAgain">▶ PLAY AGAIN</button><button type="button" id="returnLobby">☰ BACK TO LOBBY</button></div></div>
@@ -82,10 +174,10 @@
  <div class="lobbyPanel">
   <div class="lobbyEyebrow">WELCOME TO THE ARENA</div>
   <h1 class="lobbyTitle" id="lobbyTitle">FOX <em>ROCKET ARENA</em></h1>
-  <p class="lobbySub">ADVANCED AERIAL AI · 1:30 OVERTIME FOR TIED GAMES · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
+  <p class="lobbySub">SMARTER AERIAL AI · TOUCH CONTROLS · 1:30 OVERTIME FOR TIED GAMES · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
   <div class="playerIdentity">
-   <div><label for="playerName">YOUR PLAYER NAME</label><p>Appears above your car and when you score. Saved until this browser tab closes.</p></div>
-   <input id="playerName" name="playerName" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="16" placeholder="Enter your name" value="YOU" aria-label="Your player name">
+   <div><label for="playerName">YOUR PLAYER NAME</label><p>Appears above your car and when you score. Tap your name, type it, then press SAVE NAME. Kept until this tab closes.</p></div>
+   <div class="nameInputs"><input id="playerName" name="playerName" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="16" placeholder="Tap to type your name" value="YOU" aria-label="Your player name"><div class="nameButtons"><button id="saveName" type="button">✓ SAVE NAME</button><span id="nameSaved" role="status" aria-live="polite">Tap to change your name</span></div></div>
   </div>
   <div class="lobbyHeading">CHOOSE GAME MODE</div>
   <div class="modeRow" role="group" aria-label="Game mode">
@@ -139,10 +231,12 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.m
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9ab4cb);scene.fog=new THREE.FogExp2(0x9fb7cb,.000115);
 const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,0.1,5200);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false});
-let quality=1;const qualityLevels=[1,Math.min(devicePixelRatio,2),Math.min(3,Math.max(devicePixelRatio,2.5))];
+let quality=1;const qualityLevels=matchMedia('(pointer:coarse)').matches
+ ?[1,Math.min(devicePixelRatio,1.3),Math.min(devicePixelRatio,1.65)]
+ :[1,Math.min(devicePixelRatio,2),Math.min(3,Math.max(devicePixelRatio,2.5))];
 function setQuality(i){quality=(i+qualityLevels.length)%qualityLevels.length;renderer.setPixelRatio(qualityLevels[quality]);renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=quality!==0;renderer.shadowMap.needsUpdate=true;renderer.setClearColor(0x111f29,1);let n=document.getElementById('qualityName');if(n)n.textContent='Quality: '+['PERFORMANCE','HIGH','ULTRA / 4K-READY'][quality]+' ('+renderer.domElement.width+' × '+renderer.domElement.height+')'}
 renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.16;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.physicallyCorrectLights=true;document.body.prepend(renderer.domElement);setQuality(1);
-scene.add(new THREE.HemisphereLight(0xe1ecff,0x28472e,1.25));let sun=new THREE.DirectionalLight(0xffe9ca,2.35);sun.position.set(-430,740,-320);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);sun.shadow.camera.left=-1300;sun.shadow.camera.right=1300;sun.shadow.camera.top=1700;sun.shadow.camera.bottom=-1700;sun.shadow.camera.near=20;sun.shadow.camera.far=2200;sun.shadow.bias=-.00006;sun.shadow.normalBias=.025;scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xe1ecff,0x28472e,1.25));let sun=new THREE.DirectionalLight(0xffe9ca,2.35);sun.position.set(-430,740,-320);sun.castShadow=true;sun.shadow.mapSize.set(matchMedia('(pointer:coarse)').matches?2048:4096,matchMedia('(pointer:coarse)').matches?2048:4096);sun.shadow.camera.left=-1300;sun.shadow.camera.right=1300;sun.shadow.camera.top=1700;sun.shadow.camera.bottom=-1700;sun.shadow.camera.near=20;sun.shadow.camera.far=2200;sun.shadow.bias=-.00006;sun.shadow.normalBias=.025;scene.add(sun);
 // Image-based environment lighting, generated entirely locally (no extra downloaded textures).
 const pmrem=new THREE.PMREMGenerator(renderer);const envScene=new THREE.Scene();envScene.background=new THREE.Color(0x899eb1);const dome=new THREE.Mesh(new THREE.SphereGeometry(850,32,16),new THREE.MeshBasicMaterial({color:0x7e91ab,side:THREE.BackSide}));envScene.add(dome);
 for(let i=0;i<12;i++){let panel=new THREE.Mesh(new THREE.PlaneGeometry(140,65),new THREE.MeshBasicMaterial({color:i%3===0?0xffedce:0xe8f7ff,side:THREE.DoubleSide}));let t=i*Math.PI*2/12;panel.position.set(Math.cos(t)*380,155,Math.sin(t)*380);panel.lookAt(0,110,0);envScene.add(panel)}
@@ -493,6 +587,13 @@ function setPlayerName(value){
  configureMode(mode);
  return name;
 }
+function commitPlayerName(){
+ const field=document.getElementById('playerName');
+ const name=setPlayerName(field.value);
+ field.value=name;savePlayerName(name);
+ document.getElementById('nameSaved').textContent='✓ Saved as '+name;
+ return name;
+}
 function selectCar(style){
  if(!playerVisuals[style])return;
  const previous=player.mesh,next=playerVisuals[style];
@@ -534,8 +635,8 @@ function chooseExplosion(style){
 
 let lastTouch=null,replayScorerText='GOAL!';
 function getScoringMessage(team){
- if(!lastTouch)return (team===0?'ORANGE':'BLUE')+' SCORES!';
- return lastTouch.team===team?lastTouch.name+' SCORES!':lastTouch.name+' OWN GOAL!';
+ if(!lastTouch)return (team===0?'ORANGE':'BLUE')+' SCORED!';
+ return lastTouch.team===team?lastTouch.name+' SCORED!':lastTouch.name+' OWN GOAL!';
 }
 function applyColors(){
  orangeMat.color.set(colors.car);
@@ -827,6 +928,8 @@ function updateCamLabel(){
   const label=document.getElementById('camState');
   label.textContent=`BALL CAM ${ballCam?'ON':'OFF'} · Q TO TOGGLE`;
   label.className=ballCam?'on':'off';
+  const touchCam=document.querySelector('#touchControls [data-action="ballcam"]');
+  if(touchCam)touchCam.textContent=ballCam?'🎥 CAM ON':'🎥 CAM OFF';
 }
 // Physical key codes are stable for WASD / arrow controls even when Caps Lock,
 // browser keyboard layouts, or modifier keys alter KeyboardEvent.key.
@@ -842,6 +945,7 @@ function keyName(e){
   return mapped[code]||String(e.key||'').toLowerCase();
 }
 addEventListener('keydown',e=>{
+  if(e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable]'))return;
   const k=keyName(e);
   if(k==='escape'&&!e.repeat){if(!inLobby)openLobby();e.preventDefault();return;}
   if(inLobby)return;
@@ -855,10 +959,49 @@ addEventListener('keydown',e=>{
   if(k==='p'&&!e.repeat){if(onlineActive)show('ONLINE MATCHES CANNOT PAUSE',1.4);else{paused=!paused;show(paused?'PAUSED':'',paused?999:0)}}
   if(k==='r'&&!e.repeat){if(onlineActive)show('MATCH RESTARTS AUTOMATICALLY',1.4);else restart();}
   if(k==='g'&&!e.repeat)setQuality(quality+1);
-  if(k==='h'&&!e.repeat)document.getElementById('info').hidden=!document.getElementById('info').hidden;
+  if(k==='h'&&!e.repeat)toggleHelp();
 });
 addEventListener('keyup',e=>keys[keyName(e)]=false);
 addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(!inLobby&&!onlineActive){paused=true;show('PAUSED',999)}});
+// Touch pads use Pointer Events with pointer capture; each finger can hold a
+// different button. No keyboard is required on iPad, iPhone or Android.
+const helpToggle=document.getElementById('helpToggle');
+const helpPanel=document.getElementById('info');
+function toggleHelp(){const showHelp=helpPanel.hidden;helpPanel.hidden=!showHelp;helpToggle.setAttribute('aria-expanded',String(showHelp));helpToggle.textContent=showHelp?'✕ CLOSE CONTROLS':'❔ CONTROLS';}
+helpToggle.addEventListener('click',toggleHelp);
+const touchHeld=new Map();
+function stopTouchKey(button,pointer){
+ if(touchHeld.get(button)!==pointer)return;
+ touchHeld.delete(button);button.classList.remove('pressed');
+ const k=button.dataset.key;
+ if(k!==undefined&&!Array.from(touchHeld.keys()).some(b=>b.dataset.key===k))keys[k]=false;
+}
+for(const button of document.querySelectorAll('#touchControls button')){
+ button.addEventListener('contextmenu',e=>e.preventDefault());
+ button.addEventListener('pointerdown',e=>{
+  if(inLobby||finished)return;
+  e.preventDefault();
+  if(button.dataset.action){
+   const action=button.dataset.action;
+   if(action==='ballcam'){ballCam=!ballCam;updateCamLabel();}
+   if(action==='skip'&&(replayActive||goalPause>0))finishReplay();
+   if(action==='pause'){paused=!paused;show(paused?'PAUSED':'',paused?999:0);}
+   if(action==='practice'){
+    if(mode==='shots'||mode==='saves')nextTrainingDrill();
+    else if(mode==='free')freePlayAction('t');
+   }
+   return;
+  }
+  if(touchHeld.has(button))return;
+  button.setPointerCapture(e.pointerId);
+  touchHeld.set(button,e.pointerId);button.classList.add('pressed');
+  keys[button.dataset.key]=true;
+  if(button.dataset.key===' '&&!replayActive&&goalPause===0)jumpQueued=true;
+ },{passive:false});
+ for(const ev of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(ev,e=>stopTouchKey(button,e.pointerId));
+}
+function clearTouchKeys(){for(const [button,pointer] of touchHeld)stopTouchKey(button,pointer);}
+
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));function angleDiff(a,b){return Math.atan2(Math.sin(a-b),Math.cos(a-b))}function show(t,secs=1.5){let el=document.getElementById('banner');el.textContent=t;el.style.display=t?'block':'none';bannerTime=secs}
 function kickoff(){
  Object.assign(player,{x:0,z:FL*.63,y:0,vx:0,vz:0,vy:0,a:0,onGround:true,wall:null,wallHeight:0,boost:100,jumps:0,airTime:0,flipLeft:0});
@@ -890,16 +1033,16 @@ function openLobby(){
  leaveOnline();
  document.getElementById('winnerScreen').hidden=true;pendingWinner=null;overtime=false;otExtra=0;
  inLobby=true;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;pendingReplay=[];training.active=false;training.wait=0;
- clearExplosions();clearDemoEffects();show('',0);Object.keys(keys).forEach(k=>keys[k]=false);
+ clearExplosions();clearDemoEffects();show('',0);clearTouchKeys();Object.keys(keys).forEach(k=>keys[k]=false);
  document.getElementById('replayBadge').style.display='none';
  document.getElementById('hud').style.display='none';
  document.getElementById('lobby').hidden=false;
 }
 function startMatch(){
- applyColors();configureMode(mode);inLobby=false;
+ commitPlayerName();applyColors();configureMode(mode);inLobby=false;
  document.getElementById('lobby').hidden=true;
  document.getElementById('hud').style.display='block';
- Object.keys(keys).forEach(k=>keys[k]=false);
+ clearTouchKeys();Object.keys(keys).forEach(k=>keys[k]=false);
  restart();
 }
 function updateHud(){
@@ -915,6 +1058,7 @@ function updateHud(){
  document.getElementById('trainingTitle').textContent=title;
  const stats=mode==='free'?'Unlimited time · Unlimited boost':`Successful: ${training.success} / ${training.attempts} · ${training.active?Math.max(0,Math.ceil(training.limit-training.elapsed))+'s remaining':'Next drill loading'}`;
  document.getElementById('trainingStats').textContent=stats;
+ document.querySelector('#touchControls [data-action=practice]').hidden=!(mode==='free'||mode==='shots'||mode==='saves');
  document.getElementById('trainingHelp').innerHTML=mode==='free'?'C: place ball ahead<br>V: stop ball<br>B: launch a practice pass<br>T: wall air-dribble setup<br>R: reset arena · ESC: lobby':`N: new ${mode==='shots'?'shot':'save'} drill<br>Score: ${training.success}/${training.attempts} successful<br>R: restart session · ESC: lobby`;
  document.getElementById('boostnum').textContent=Math.round(player.boost);document.getElementById('fill').style.width=player.boost+'%';document.getElementById('altitude').textContent=Math.round(player.y);document.getElementById('status').textContent=player.demoTimer>0?'DEMOLISHED':player.boosting&&Math.hypot(player.vx,player.vz)>DEMO_SPEED?'SUPERSONIC':player.wall?'WALL DRIVING':player.onGround?'ON GROUND':'AIRBORNE';document.getElementById('tip').textContent=player.demoTimer>0?'WAIT FOR RESPAWN':player.boosting&&Math.hypot(player.vx,player.vz)>DEMO_SPEED?'RAM ENEMY CARS TO DEMO!':player.onGround?'HOLD F = QUICK AERIAL':player.wall?'SPACE or F to launch off wall':'HOLD F to fly · S pitch up · SHIFT boost';
  const rollDisplay=document.getElementById('airRollState');
@@ -1384,10 +1528,11 @@ function touchCar(c){
   // Player shots remain fully under player control.
   if(c!==player){
     const attack=c.team===0?-1:1;
-    const inDanger=ball.z*(-attack)>FL*.35;
-    if(inDanger&&ball.vz*attack<105){
-      ball.vz=attack*(170+Math.max(0,Math.hypot(c.vx,c.vz)-150)*.24);
-      ball.vx+=clamp(-ball.x*.12,-65,65);
+    const inDanger=ball.z*(-attack)>FL*.16;
+    if(inDanger&&ball.vz*attack<175){
+      ball.vz=attack*(230+Math.max(0,Math.hypot(c.vx,c.vz)-110)*.25);
+      ball.vx+=clamp(-ball.x*.18,-90,90);
+      ball.vy=Math.max(ball.vy,85); // elevated clear, not another own-goal tap
     }
   }
   ball.x=c.x+nx*(min+.5);ball.y=c.y+16+ny*(min+.5);ball.z=c.z+nz*(min+.5);
@@ -1418,6 +1563,16 @@ function updateBall(dt){
  ballMesh.rotation.x+=ball.vz*dt/ball.r;
  ballMesh.rotation.z-=ball.vx*dt/ball.r;
 }
+// Predict the ball's position with the same horizontal damping and gravity as
+// updateBall(). Limit the prediction to the current bounce: future intercepts
+// must aim at a reachable position, not beneath the turf.
+function predictBallFlight(seconds){
+ const t=clamp(seconds,0,1.15);
+ const h=(1-Math.exp(-.2*t))/.2;
+ return {x:clamp(ball.x+ball.vx*h,-FW+ball.r,FW-ball.r),
+   z:clamp(ball.z+ball.vz*h,-FL+ball.r,FL-ball.r),
+   y:clamp(ball.y+ball.vy*t-230*t*t,ball.r,ROOF_Y-ball.r-12)};
+}
 // Tactical AI: intercept projected ball path, take the correct side of the
 // ball, defend the goal line, and avoid clearing into its own net.
 // AI tactics: prediction, goal-side defense, boost, aerial interception and
@@ -1429,10 +1584,11 @@ function aiControl(c,dt){
  const home=-attack;
  const dx=ball.x-c.x,dz=ball.z-c.z;
  const distance=Math.hypot(dx,dz);
- const lead=clamp(distance/520,.10,.70);
- const bx=clamp(ball.x+ball.vx*lead,-FW+RAMP_RADIUS+ball.r+10,FW-RAMP_RADIUS-ball.r-10);
- const bz=clamp(ball.z+ball.vz*lead,-FL+RAMP_RADIUS+ball.r+20,FL-RAMP_RADIUS-ball.r-20);
- const predictedY=clamp(ball.y+ball.vy*lead-230*lead*lead,ball.r,ROOF_Y-60);
+ const lead=clamp(distance/(Math.hypot(c.vx,c.vz)+395),.12,.85);
+ const projected=predictBallFlight(lead);
+ const bx=clamp(projected.x,-FW+RAMP_RADIUS+ball.r+10,FW-RAMP_RADIUS-ball.r-10);
+ const bz=clamp(projected.z,-FL+RAMP_RADIUS+ball.r+20,FL-RAMP_RADIUS-ball.r-20);
+ const predictedY=projected.y;
  const ownDanger=bz*home>FL*.43;
  const urgent=bz*home>FL*.70||(bz*home>FL*.38&&ball.vz*home>120);
  const nearWall=Math.abs(ball.x)>FW-RAMP_RADIUS-145||Math.abs(ball.z)>FL-RAMP_RADIUS-130;
@@ -1446,40 +1602,55 @@ function aiControl(c,dt){
  const behindZ=clamp(bz-uz*standoff,-FL+RAMP_RADIUS+38,FL-RAMP_RADIUS-38);
  const wrongSide=(c.z-bz)*attack>ball.r+15;
 
- // Once airborne, continue flying at an intercepted future ball position.
- // Point the nose upward to boost into aerials; ease off when near a touch,
- // making short, repeatable contacts possible for air dribbles.
+ // Aerial pursuit: aim at a *future intercept*, not the ball's current spot.
+ // Balance boost, pitch/yaw, and bounded midair correction so the AI stays
+ // close enough for real repeated touches rather than passing beneath it.
  if(!c.onGround&&!c.wall){
-  const approach=clamp(distance/750,.08,.46);
-  const px=clamp(ball.x+ball.vx*approach,-FW+45,FW-45);
-  const pz=clamp(ball.z+ball.vz*approach,-FL+45,FL-45);
-  const py=clamp(ball.y+ball.vy*approach-230*approach*approach+10,ball.r+8,ROOF_Y-60);
-  const hx=px-c.x,hz=pz-c.z,hd=Math.hypot(hx,hz);
+  const interceptionTime=clamp((distance+Math.abs(ball.y-c.y)*.45)/720,.09,.62);
+  const future=predictBallFlight(interceptionTime);
+  const px=future.x,pz=future.z;
+  const py=clamp(future.y+Math.min(28,Math.abs(ball.vy)*.07),ball.r,ROOF_Y-55);
+  const hx=px-c.x,hz=pz-c.z,hy=py-(c.y+16);
+  const horizontalDistance=Math.hypot(hx,hz);
+  const ballDist=Math.hypot(hx,hy,hz);
   const desiredYaw=Math.atan2(hx,-hz);
   const yawError=angleDiff(desiredYaw,c.a);
   const forward=tmpForward.copy(FORWARD).applyQuaternion(c.q);
   const pitch=Math.asin(clamp(forward.y,-1,1));
-  const wantedPitch=clamp(Math.atan2(py-(c.y+19),Math.max(35,hd)),-.45,1.36);
-  const pitchInput=-clamp((wantedPitch-pitch)*2.0,-1,1);
-  const ballDist=Math.hypot(hx,hz,py-c.y);
-  const alignment=forward.x*hx/Math.max(1,ballDist)+forward.y*(py-c.y)/Math.max(1,ballDist)+forward.z*hz/Math.max(1,ballDist);
-  const canThrust=c.boost>4&&alignment>.55&&(ballDist>ball.r+45||c.y+25<py);
-  driving(c,pitchInput,clamp(yawError*1.65,-1,1),canThrust,dt);
-  // One extra hop when it will help connect with an elevated ball.
-  if(c.jumps===1&&c.airTime>.26&&c.airTime<.95&&ballDist<145&&py>c.y+60)jump(c);
+  const wantedPitch=clamp(Math.atan2(hy,Math.max(30,horizontalDistance)),-.62,1.38);
+  const pitchInput=clamp(-(wantedPitch-pitch)*2.8,-1,1);
+  const alignment=(forward.x*hx+forward.y*hy+forward.z*hz)/Math.max(1,ballDist);
+  const approaching=alignment>.20&&Math.abs(yawError)<1.28;
+  const canThrust=c.boost>2&&approaching&&
+    (ballDist>ball.r+38||c.y+27<py||Math.hypot(c.vx,c.vz)<85);
+  driving(c,pitchInput,clamp(yawError*2.2,-1,1),canThrust,dt);
+  // Gentle corrective rocket steering (never snap/teleport): the primary
+  // acceleration remains the car's actual nose-direction boost in driving().
+  if(canThrust&&ballDist>1&&ballDist<330){
+    const assist=210*dt*Math.min(1,(330-ballDist)/160);
+    c.vx+=hx/ballDist*assist;
+    c.vy+=hy/ballDist*assist;
+    c.vz+=hz/ballDist*assist;
+  }
+  // A precisely timed second jump helps finish close high balls.
+  if(c.jumps===1&&c.airTime>.18&&c.airTime<.95&&ballDist<135&&hy>37)jump(c);
   return;
  }
 
  // Air dribble attempt: follow a rolling ball up the rounded wall, then jump
  // away from the wall and boost toward it. Otherwise return to the field.
  if(c.wall){
-  const onWallBall=nearWall&&distance<280&&ball.y>RAMP_RADIUS*.7&&ball.y<WH-40;
+  const onWallBall=nearWall&&distance<370&&ball.y>RAMP_RADIUS*.48&&ball.y<WH-35;
   if(onWallBall){
     const heading=Math.atan2(ball.x-c.x,-(ball.z-c.z));
     const turn=angleDiff(heading,c.a);
-    driving(c,1,clamp(turn*1.9,-1,1),c.boost>12&&Math.abs(turn)<.45,dt);
-    if(c.y>RAMP_RADIUS*.75&&Math.abs(ball.y-c.y)<105&&distance<155&&c.aiAirCooldown===0){
-      jump(c);c.aiAirCooldown=1.7;c.aiAirDribble=true;
+    // Approach on the wall, matching the ball height before detaching.
+    driving(c,clamp((ball.y-c.y)/75+.52,-.50,1),clamp(turn*1.9,-1,1),
+      c.boost>12&&Math.abs(turn)<.62&&ball.y>c.y+35,dt);
+    if(c.y>RAMP_RADIUS*.65&&Math.abs(ball.y-c.y)<145&&distance<240&&c.aiAirCooldown===0){
+      jump(c);c.aiAirCooldown=1.65;c.aiAirDribble=true;c.aiFlight=true;
+      // Orient the nose slightly toward the field and toward the ball.
+      rot.setFromAxisAngle(RIGHT,.30);c.q.multiply(rot).normalize();
     }
   }else{
     const homeward=Math.atan2(-c.wall.nx,c.wall.nz);
@@ -1507,13 +1678,25 @@ function aiControl(c,dt){
   tz=clamp(behindZ+ux*clearance*preferredSide,-FL+RAMP_RADIUS+35,FL-RAMP_RADIUS-35);
  }
  if(urgent){tx=behindX;tz=behindZ;}
+ // For high wall balls, choose a point *on the ramp*. The normal attacking
+ // target is deliberately inside the ramp, which used to prevent bots from
+ // ever entering wall-driving mode and attempting air dribbles.
+ const tryWallDribble=nearWall&&ball.y>RAMP_RADIUS*.62&&ball.y<WH-45&&
+   !urgent&&c.role!=='defender'&&distance<560&&c.boost>17;
+ if(tryWallDribble){
+   if(Math.abs(ball.x)>FW-RAMP_RADIUS-135)tx=Math.sign(ball.x)*(FW-8);
+   if(Math.abs(ball.z)>FL-RAMP_RADIUS-120 && Math.abs(ball.x)>GW+30)
+     tz=Math.sign(ball.z)*(FL-9);
+ }
  for(const other of [player,...activeBots]){
   if(other===c||other.demoTimer>0)continue;
   const ox=tx-other.x,oz=tz-other.z,d2=ox*ox+oz*oz;
   if(d2<115*115&&d2>1){tx+=ox/Math.sqrt(d2)*38;tz+=oz/Math.sqrt(d2)*38;}
  }
- tx=clamp(tx,-FW+RAMP_RADIUS+25,FW-RAMP_RADIUS-25);
- tz=clamp(tz,-FL+RAMP_RADIUS+32,FL-RAMP_RADIUS-32);
+ tx=clamp(tx,tryWallDribble?-FW+8:-FW+RAMP_RADIUS+25,
+   tryWallDribble?FW-8:FW-RAMP_RADIUS-25);
+ tz=clamp(tz,tryWallDribble?-FL+8:-FL+RAMP_RADIUS+32,
+   tryWallDribble?FL-8:FL-RAMP_RADIUS-32);
  const desired=Math.atan2(tx-c.x,-(tz-c.z));
  const angle=angleDiff(desired,c.a);
  const range=Math.hypot(tx-c.x,tz-c.z);
@@ -1522,23 +1705,23 @@ function aiControl(c,dt){
  const usefulChase=!wrongSide||urgent;
  // Use boost for open-field interceptions, defensive emergencies and straight
  // approaches to aerial launch positions, but save some for flying.
- const boost=usefulChase&&c.boost>14&&absAngle<.42&&
-   (range>205||urgent&&range>95||nearWall&&range>135)&&throttle>.55;
+ const boost=usefulChase&&c.boost>13&&absAngle<.52&&
+   (range>170||urgent&&range>80||tryWallDribble&&range>110)&&throttle>.55;
  driving(c,throttle,clamp(angle*2.05,-1,1),boost,dt);
 
  // Takeoffs: clear elevated shots near the home goal, jump for attacking
  // aerials, or follow a ball rising up the curved wall. Limit bot launches
  // with cooldown so they do not hop constantly under the ball.
- const airborneBall=predictedY>ball.r+40||ball.y>ball.r+55;
- const launchRange=urgent?560:410;
+ const airborneBall=predictedY>ball.r+35||ball.y>ball.r+50;
+ const launchRange=urgent?680:580;
  const heightEnough=predictedY<ROOF_Y-65;
- const chaseReady=distance>65&&distance<launchRange&&absAngle<.72&&usefulChase;
+ const chaseReady=distance>60&&distance<launchRange&&absAngle<1.08&&usefulChase;
  const wantsAir=c.role!=='defender'||ownDanger||urgent;
  if(c.onGround&&c.aiAirCooldown===0&&c.boost>11&&airborneBall&&heightEnough&&chaseReady&&wantsAir){
   jump(c);
   rot.setFromAxisAngle(RIGHT,clamp(Math.atan2(predictedY-25,Math.max(90,distance))+.12,.3,1.10));
   c.q.multiply(rot).normalize();
-  c.aiAirCooldown=2.4;c.aiFlight=true;c.aiAirDribble=nearWall;
+  c.aiAirCooldown=1.65;c.aiFlight=true;c.aiAirDribble=nearWall;
  }else if(c.onGround&&c.aiAirCooldown===0&&distance<ball.r+70&&ball.y>ball.r+25&&urgent){
   jump(c);c.aiAirCooldown=1.8;
  }
@@ -1738,14 +1921,23 @@ for(const [key,id] of [['car','carColor'],['goal','goalColor'],['explosion','exp
 const playerNameInput=document.getElementById('playerName');
 playerNameInput.value=loadPlayerName();
 setPlayerName(playerNameInput.value);
+let composingPlayerName=false;
+playerNameInput.addEventListener('compositionstart',()=>{composingPlayerName=true;});
+playerNameInput.addEventListener('compositionend',()=>{composingPlayerName=false;document.getElementById('nameSaved').textContent='Tap SAVE NAME';});
 playerNameInput.addEventListener('input',()=>{
- const name=setPlayerName(playerNameInput.value);
- savePlayerName(name);
+ if(!composingPlayerName)document.getElementById('nameSaved').textContent='Tap SAVE NAME';
 });
-playerNameInput.addEventListener('blur',()=>{
- const name=setPlayerName(playerNameInput.value);
- playerNameInput.value=name;
- savePlayerName(name);
+playerNameInput.addEventListener('focus',()=>{
+ if(playerNameInput.value==='YOU')playerNameInput.select();
+});
+playerNameInput.addEventListener('change',commitPlayerName);
+playerNameInput.addEventListener('blur',()=>{if(!composingPlayerName)commitPlayerName();});
+playerNameInput.addEventListener('keydown',e=>{
+ e.stopPropagation();
+ if(e.key==='Enter'){e.preventDefault();commitPlayerName();playerNameInput.blur();}
+});
+document.getElementById('saveName').addEventListener('click',()=>{
+ commitPlayerName();playerNameInput.blur();
 });
 document.getElementById('startGame').addEventListener('click',startMatch);
 document.getElementById('playAgain').addEventListener('click',startMatch);
