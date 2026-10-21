@@ -1075,19 +1075,40 @@ function bowlBoundary(x,z,allowGoal=false){
  if(allowGoal&&ax<GW+9)return side;
  return side.s>end.s?side:end;
 }
+// Wall traction: drive in the direction the car points ON the surface.
+// Previously, pressing W generated a large upward force regardless of steering,
+// which made the walls behave like conveyor belts and spoiled air dribbles.
 function moveAlongWall(c,dt,throttle){
  const w=c.wall;if(!w)return;
- // Arc-length integration avoids the old instant teleport from floor onto wall.
  const radius=RAMP_RADIUS-CAR_WALL_INSET;
- const drivingPower=(c.boosting?1020:throttle>0?610:throttle<0?-350:0);
- const theta=w.phase==='ramp'?Math.max(0,w.progress/radius):Math.PI/2;
- w.speed+=(drivingPower-460*Math.sin(theta)-.62*w.speed)*dt;
- w.speed=clamp(w.speed,-370,c.boosting?510:360);
+ const angle=w.phase==='ramp'?clamp(w.progress/radius,0,Math.PI/2):Math.PI/2;
+ const dx=Math.sin(c.a),dz=-Math.cos(c.a);
+ // Tangent basis on the wall: uphill and sideways. A 90-degree turn means
+ // forward movement runs ACROSS the wall rather than shooting straight up it.
+ const pointUp=dx*w.nx+dz*w.nz;
+ const pointSide=-dx*w.nz+dz*w.nx;
+ const acceleration=throttle>0?(c.boosting?1000:570):throttle<0?-410:0;
+ w.speed+=acceleration*pointUp*dt;
+ w.sideSpeed+=acceleration*pointSide*dt;
+ // Grip holds the car on a vertical wall without sliding when steering sideways;
+ // the curved ramp still has a modest slope force so you can roll back down.
+ const slope=Math.sin(angle);
+ const gravity=w.phase==='vertical'?0:75*slope;
+ w.speed-=gravity*dt;
+ w.speed*=Math.exp(-(throttle===0?4.8:1.35)*dt);
+ w.sideSpeed*=Math.exp(-(throttle===0?3.3:1.20)*dt);
+ if(w.phase==='vertical'&&throttle===0&&Math.abs(w.speed)<8)w.speed=0;
+ if(Math.abs(w.sideSpeed)<.08)w.sideSpeed=0;
+ const cap=c.boosting?570:370;
+ const speed=Math.hypot(w.speed,w.sideSpeed);
+ if(speed>cap){const factor=cap/speed;w.speed*=factor;w.sideSpeed*=factor;}
  if(w.phase==='ramp'){
   w.progress+=w.speed*dt;
-  if(w.progress<0){
-   // Transition smoothly back onto the flat playing surface.
+  if(w.progress<=0){
+   // Leave the ramp only when moving down its lower edge.
+   const along=w.sideSpeed;
    c.wall=null;c.onGround=true;c.y=0;c.vy=0;c.jumps=0;
+   c.vx=-w.nz*along;c.vz=w.nx*along;
    c.q.setFromAxisAngle(UP,-c.a);
    return;
   }
@@ -1099,27 +1120,26 @@ function moveAlongWall(c,dt,throttle){
   if(c.wallHeight<RAMP_RADIUS-CAR_WALL_INSET){
    w.phase='ramp';w.progress=radius*Math.PI/2;
   }
-  if(c.wallHeight>WH-20){c.wallHeight=WH-20;w.speed=Math.min(0,w.speed);}
+  if(c.wallHeight>WH-27){c.wallHeight=WH-27;w.speed=Math.min(0,w.speed);}
  }
- const angle=w.phase==='ramp'?clamp(w.progress/radius,0,Math.PI/2):Math.PI/2;
- const path=radius*Math.sin(angle);
- // Preserve sideways steering momentum while following the ramp uphill.
- const tangential=-w.nz*c.vx+w.nx*c.vz;
- w.startX-=w.nz*tangential*dt;w.startZ+=w.nx*tangential*dt;
+ const theta=w.phase==='ramp'?clamp(w.progress/radius,0,Math.PI/2):Math.PI/2;
+ const along=w.sideSpeed;
+ w.startX-=w.nz*along*dt;w.startZ+=w.nx*along*dt;
  if(w.axis==='x')w.startZ=clamp(w.startZ,-FL+CORNER_RADIUS,FL-CORNER_RADIUS);
  if(w.axis==='z')w.startX=clamp(w.startX,-FW+CORNER_RADIUS,FW-CORNER_RADIUS);
- c.x=w.startX+w.nx*path;c.z=w.startZ+w.nz*path;
- c.y=w.phase==='ramp'?RAMP_RADIUS-radius*Math.cos(angle)-CAR_WALL_INSET:c.wallHeight;
- c.vx=w.nx*w.speed*Math.cos(angle)-w.nz*tangential;
- c.vz=w.nz*w.speed*Math.cos(angle)+w.nx*tangential;
- c.vy=w.speed*Math.sin(angle);
- // The car's wheels remain aligned with the curved surface while its nose
- // continues to respond to steering. No abrupt 90-degree snap on contact.
+ c.x=w.startX+w.nx*radius*Math.sin(theta);
+ c.z=w.startZ+w.nz*radius*Math.sin(theta);
+ c.y=w.phase==='ramp'?RAMP_RADIUS-radius*Math.cos(theta)-CAR_WALL_INSET:c.wallHeight;
+ c.vx=w.nx*w.speed*Math.cos(theta)-w.nz*along;
+ c.vz=w.nz*w.speed*Math.cos(theta)+w.nx*along;
+ c.vy=w.speed*Math.sin(theta);
+ // Rotate the entire car into the surface. Steering (a) is preserved, so
+ // the nose follows the wall instead of snapping to point upward.
  c.q.setFromAxisAngle(UP,-c.a);
- rot.setFromAxisAngle(new THREE.Vector3(-w.nz,0,w.nx),angle);
+ rot.setFromAxisAngle(new THREE.Vector3(-w.nz,0,w.nx),theta);
  c.q.premultiply(rot).normalize();
-
 }
+
 function collideBallWithBowl(){
  // Sphere against a circular concave floor/wall fillet. Correct both
  // position and velocity along the true curved normal so balls roll UP ramps.
@@ -1260,9 +1280,10 @@ function driving(c,throttle,steer,boost,dt,roll=0){
       if(b.s>=0&&outward>10){
         // Begin the ramp at the TRUE floor level, keeping speed from the approach.
         const progress=Math.asin(clamp(b.s/(RAMP_RADIUS-CAR_WALL_INSET),0,.98))*(RAMP_RADIUS-CAR_WALL_INSET);
+        const sideways=-b.nz*c.vx+b.nx*c.vz;
         c.wall={axis:b.axis,sign:b.sign,nx:b.nx,nz:b.nz,
           startX:c.x-b.nx*b.s,startZ:c.z-b.nz*b.s,
-          progress,speed:Math.max(outward,60),phase:'ramp'};
+          progress,speed:Math.max(outward,0),sideSpeed:sideways,phase:'ramp'};
         c.onGround=false;
       }
     }
@@ -1307,6 +1328,17 @@ function touchCar(c){
     ball.vy=ny*impulse+c.vy*.34+24;
     ball.vz=nz*impulse+c.vz*.34;
   }
+  // AI-only emergency clearance: if a touch in the defensive third would
+  // accelerate the ball toward its OWN net, redirect that touch upfield.
+  // Player shots remain fully under player control.
+  if(c!==player){
+    const attack=c.team===0?-1:1;
+    const inDanger=ball.z*(-attack)>FL*.35;
+    if(inDanger&&ball.vz*attack<105){
+      ball.vz=attack*(170+Math.max(0,Math.hypot(c.vx,c.vz)-150)*.24);
+      ball.vx+=clamp(-ball.x*.12,-65,65);
+    }
+  }
   ball.x=c.x+nx*(min+.5);ball.y=c.y+16+ny*(min+.5);ball.z=c.z+nz*(min+.5);
 }
 function updateBall(dt){
@@ -1335,45 +1367,89 @@ function updateBall(dt){
  ballMesh.rotation.x+=ball.vz*dt/ball.r;
  ballMesh.rotation.z-=ball.vx*dt/ball.r;
 }
+// Tactical AI: intercept projected ball path, take the correct side of the
+// ball, defend the goal line, and avoid clearing into its own net.
 function aiControl(c,dt){
  if(c.demoTimer>0)return;
- // Each CPU has a team, tactical role and its own interception position.
- const attackZ=c.team===0?-FL:FL,homeZ=-attackZ;
+ const attack=c.team===0?-1:1; // sign of the opponent's goal
+ const home=-attack;
  const dx=ball.x-c.x,dz=ball.z-c.z;
- const t=clamp(Math.hypot(dx,dz)/390,.08,.55);
- const bx=clamp(ball.x+ball.vx*t,-FW+35,FW-35),bz=clamp(ball.z+ball.vz*t,-FL+40,FL-40);
- let tx=bx,tz=bz;
- if(c.role==='defender'){
-   // Hold a defensive line, intercept when play comes into our half.
-   const threat=(homeZ>0?bz>110:bz<-110);
-   tx=clamp(bx*.85,-GW-75,GW+75);
-   tz=threat?clamp(bz,-FL+120,FL-120):homeZ-Math.sign(homeZ)*225;
- }else if(c.role==='support'){
-   // Support on an offset lane, then challenge the ball up close.
-   const offset=c.team===0?-105:105;
-   tx=clamp(bx+offset,-FW+60,FW-60);
-   tz=clamp(bz+(c.team===0?115:-115),-FL+50,FL-50);
-   if(Math.hypot(dx,dz)<150){tx=bx;tz=bz;}
- }else{
-   // Get behind ball relative to attacking goal to avoid own goals.
-   let vx=-bx,vz=attackZ-bz,mag=Math.hypot(vx,vz)||1;
-   tx=bx-vx/mag*62;tz=bz-vz/mag*62;
-   if(Math.hypot(dx,dz)<92){tx=bx;tz=bz;}
+ const distance=Math.hypot(dx,dz);
+ const lead=clamp(distance/470,.09,.82);
+ const bx=clamp(ball.x+ball.vx*lead,-FW+RAMP_RADIUS+ball.r+10,FW-RAMP_RADIUS-ball.r-10);
+ const bz=clamp(ball.z+ball.vz*lead,-FL+RAMP_RADIUS+ball.r+20,FL-RAMP_RADIUS-ball.r-20);
+ const ownDanger=bz*home>FL*.46;
+ const urgent=bz*home>FL*.73 || (bz*home>FL*.38&&ball.vz*home>125);
+ // Shoot toward the center of the opposing goal, not simply toward the ball.
+ const aimX=clamp(-bx*.30,-GW*.65,GW*.65);
+ const dirX=aimX-bx,dirZ=attack*FL-bz;
+ const shotLength=Math.hypot(dirX,dirZ)||1;
+ const ux=dirX/shotLength,uz=dirZ/shotLength;
+ const standoff=ball.r+46+(distance>320?35:10);
+ const behindX=clamp(bx-ux*standoff,-FW+RAMP_RADIUS+35,FW-RAMP_RADIUS-35);
+ const behindZ=clamp(bz-uz*standoff,-FL+RAMP_RADIUS+38,FL-RAMP_RADIUS-38);
+ let tx=behindX,tz=behindZ;
+ if(c.role==='defender'&&!urgent){
+  // A dedicated goalie holds a useful goal-side position and challenges
+  // only when the ball enters the defensive third.
+  const goalLine=home*(FL-140);
+  const dangerLane=clamp(bx*.75,-GW+38,GW-38);
+  if(ownDanger){
+   tx=behindX;tz=behindZ;
+  }else{
+   tx=dangerLane;
+   tz=goalLine;
+  }
+ }else if(c.role==='support'&&!urgent){
+  // Support occupies a passing lane rather than crowding the striker.
+  if(distance>175){
+   tx=clamp(bx+(c.team===0?-145:145),-FW+RAMP_RADIUS+50,FW-RAMP_RADIUS-50);
+   tz=clamp(bz-home*100,-FL+RAMP_RADIUS+45,FL-RAMP_RADIUS-45);
+  }
  }
- // Keep CPU cars from all following the exact same path.
+ // Never charge THROUGH the ball when between it and the opponent's goal.
+ // Swing round the side first, then drive forward from the safe goal-side lane.
+ const wrongSide=(c.z-bz)*attack>ball.r+15;
+ if(wrongSide&&distance<500){
+  const preferredSide=Math.sign(c.x-bx)||((c.name.length%2)?1:-1);
+  const sideX=-uz,sideZ=ux;
+  const clearance=ball.r+115;
+  tx=clamp(behindX+sideX*clearance*preferredSide,-FW+RAMP_RADIUS+30,FW-RAMP_RADIUS-30);
+  tz=clamp(behindZ+sideZ*clearance*preferredSide,-FL+RAMP_RADIUS+35,FL-RAMP_RADIUS-35);
+ }
+ // Defenders use the emergency route only when a shot is actually dangerous;
+ // they recover to the safe (goal-side) position instead of own-goaling.
+ if(urgent&&c.role==='defender'){tx=behindX;tz=behindZ;}
+ // Avoid body-blocking other cars while remaining near the assigned lane.
  for(const other of [player,...activeBots]){
-   if(other===c)continue;
-   const ox=tx-other.x,oz=tz-other.z,d2=ox*ox+oz*oz;
-   if(d2<80*80&&d2>1){tx+=ox/Math.sqrt(d2)*22;tz+=oz/Math.sqrt(d2)*22;}
+  if(other===c||other.demoTimer>0)continue;
+  const ox=tx-other.x,oz=tz-other.z,d2=ox*ox+oz*oz;
+  if(d2<115*115&&d2>1){tx+=ox/Math.sqrt(d2)*38;tz+=oz/Math.sqrt(d2)*38;}
  }
- tx=clamp(tx,-FW+28,FW-28);tz=clamp(tz,-FL+28,FL-28);
- const targetA=Math.atan2(tx-c.x,-(tz-c.z));
- const angle=angleDiff(targetA,c.a),range=Math.hypot(tx-c.x,tz-c.z);
- const throttle=Math.abs(angle)>2.25&&range<130?-.45:range<35?.2:1;
- const useBoost=Math.abs(angle)<.34&&range>170&&c.boost>15;
- driving(c,throttle,clamp(angle*2.0,-1,1),useBoost,dt);
- if(c.onGround&&Math.hypot(dx,dz)<115&&ball.y>34&&ball.y<150){jump(c);c.vy=JUMP_VELOCITY;}
+ tx=clamp(tx,-FW+RAMP_RADIUS+25,FW-RAMP_RADIUS-25);
+ tz=clamp(tz,-FL+RAMP_RADIUS+32,FL-RAMP_RADIUS-32);
+ // Brake for hard turns, accelerate on straight lines, boost on long chases.
+ const desired=Math.atan2(tx-c.x,-(tz-c.z));
+ const angle=angleDiff(desired,c.a);
+ const range=Math.hypot(tx-c.x,tz-c.z);
+ const absAngle=Math.abs(angle);
+ let throttle=range<28?.08:absAngle>2.3?-.35:absAngle>1.25?.24:1;
+ if(wrongSide&&distance<ball.r+95)throttle=Math.min(throttle,.14);
+ const boosting=absAngle<.22&&range>230&&c.boost>20&&!wrongSide;
+ // If an AI is on a wall, steer toward the field and drive back down.
+ if(c.wall&&c.y>RAMP_RADIUS*.85){
+  const homeward=Math.atan2(-c.wall.nx,c.wall.nz);
+  const safeAngle=angleDiff(homeward,c.a);
+  driving(c,.75,clamp(safeAngle*2,-1,1),false,dt);
+  if(c.y>RAMP_RADIUS+50&&Math.abs(safeAngle)<.3)jump(c);
+  return;
+ }
+ driving(c,throttle,clamp(angle*1.9,-1,1),boosting,dt);
+ // Aerial challenges only when already in a good shooting/clearing position.
+ if(c.onGround&&distance<ball.r+80&&ball.y>ball.r+28&&ball.y<160
+    &&!wrongSide&&((ball.z-c.z)*attack>10||ownDanger))jump(c);
 }
+
 // Continuous (swept) hit detection: check the path both cars traveled THIS frame,
 // not just their final positions. Prevents high-speed cars driving through opponents.
 function carCollisionContact(a,b,previous){
