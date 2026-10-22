@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fox Rocket Arena — Mobile Controls & Advanced AI</title>
+<title>Fox Rocket Arena — Joystick & Shots Overtime</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -139,16 +139,30 @@
  #lobbyButton{top:9px}
  .lobbyPanel{padding:16px;border-radius:16px}
 }
+
+/* Analog, independent multitouch joystick. Thumb follows finger continuously. */
+#driveJoystick{position:relative;width:150px;height:150px;border-radius:50%;border:2px solid #b2daf78c;background:radial-gradient(circle,#163e5dbb 0%,#0b243acc 70%,#071a2cfa 100%);box-shadow:inset 0 0 22px #000a,0 7px 25px #0008;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+#driveJoystick.active{border-color:#ffcb7e;box-shadow:0 0 24px #ffa34a66,inset 0 0 20px #000a}
+#joystickThumb{position:absolute;left:50%;top:50%;width:63px;height:63px;margin:-31.5px 0 0 -31.5px;border-radius:50%;border:2px solid #ffe5b6;background:linear-gradient(130deg,#ffa75a,#a34b24);box-shadow:0 5px 15px #000b;pointer-events:none;transform:translate(0,0);will-change:transform}
+.joystickMark{position:absolute;font-size:13px;color:#b5d9ee99;font-weight:900;pointer-events:none;line-height:1}
+.joystickMark.up{top:6px;left:calc(50% - 7px)}.joystickMark.down{bottom:6px;left:calc(50% - 7px)}.joystickMark.left{left:7px;top:calc(50% - 7px)}.joystickMark.right{right:7px;top:calc(50% - 7px)}
+#shotsHud{position:absolute;top:69px;left:50%;transform:translateX(-50%);padding:5px 15px;border-radius:9px;color:#ecf7ff;background:#071523d8;border:1px solid #ffffff40;font-size:12px;font-weight:900;white-space:nowrap;letter-spacing:.04em}
+#winnerReason{color:#ffe39d;font-size:15px;font-weight:850;line-height:1.5;margin:4px 0 20px}
+@media(pointer:coarse){#driveJoystick{width:clamp(116px,16vw,150px);height:clamp(116px,16vw,150px)}}
+@media(pointer:coarse) and (max-height:520px){#driveJoystick{width:113px;height:113px}}
+@media(pointer:coarse) and (max-width:580px){#driveJoystick{width:120px;height:120px}#shotsHud{top:48px;font-size:10px;padding:4px 9px}}
+@media(pointer:coarse) and (max-width:580px) and (orientation:portrait){#driveJoystick{width:112px;height:112px}}
 </style></head><body>
-<div id="hud"><button id="helpToggle" type="button" aria-controls="info" aria-expanded="false">❔ CONTROLS</button><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="info" hidden><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button>
+<div id="hud"><button id="helpToggle" type="button" aria-controls="info" aria-expanded="false">❔ CONTROLS</button><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="shotsHud" aria-live="off">SHOTS · ORANGE 0 — 0 BLUE</div><div id="info" hidden><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>OVERTIME:</b> 1:30 max; next goal wins, otherwise more shots decides the winner.</div><div><b>TOUCH:</b> Drag left joystick; use right-side boost, jump and aerial buttons.</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button>
 <div id="touchControls" aria-label="Touch game controls">
   <div class="touchCluster"><div>
-   <div class="touchLabel">DRIVE / DODGE</div>
-   <div class="touchDpad">
-     <button class="touchUp" data-key="arrowup" aria-label="Forward">▲</button>
-     <button class="touchLeft" data-key="arrowleft" aria-label="Turn left">◀</button>
-     <button class="touchDown" data-key="arrowdown" aria-label="Reverse / pitch up">▼</button>
-     <button class="touchRight" data-key="arrowright" aria-label="Turn right">▶</button>
+   <div class="touchLabel">DRAG TO DRIVE / STEER</div>
+   <div id="driveJoystick" role="group" aria-label="Virtual driving joystick">
+     <span class="joystickMark up">▲</span>
+     <span class="joystickMark down">▼</span>
+     <span class="joystickMark left">◀</span>
+     <span class="joystickMark right">▶</span>
+     <div id="joystickThumb"></div>
    </div></div></div>
   <div class="touchCluster"><div>
    <div class="touchTools">
@@ -166,7 +180,7 @@
    </div></div></div>
 </div><div id="banner"></div><div id="replayBadge">▶ GOAL REPLAY · <span id="replayScorer">GOAL!</span><small>0.70× SLOW MOTION + GOAL EXPLOSION · ENTER TO SKIP</small><div id="replayTrack"><div id="replayFill"></div></div></div></div>
 <div id="winnerScreen" hidden role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
- <div class="winnerPanel"><div class="winnerEyebrow">🏆 FINAL RESULT</div><div id="winnerTitle">WINNER!</div><div id="winnerScore">0 — 0</div><div id="winnerPlayers"></div>
+ <div class="winnerPanel"><div class="winnerEyebrow">🏆 FINAL RESULT</div><div id="winnerTitle">WINNER!</div><div id="winnerScore">0 — 0</div><div id="winnerReason"></div><div id="winnerPlayers"></div>
  <div class="winnerActions"><button type="button" id="playAgain">▶ PLAY AGAIN</button><button type="button" id="returnLobby">☰ BACK TO LOBBY</button></div></div>
 </div>
 <div id="warning"><div><h2>3D renderer couldn't load</h2><p>This game uses Three.js from a CDN. Connect to the internet, then refresh the page. Serve it with <code>python3 -m http.server 8000</code> and open <a href="http://localhost:8000">localhost:8000</a>.</p></div></div>
@@ -174,7 +188,7 @@
  <div class="lobbyPanel">
   <div class="lobbyEyebrow">WELCOME TO THE ARENA</div>
   <h1 class="lobbyTitle" id="lobbyTitle">FOX <em>ROCKET ARENA</em></h1>
-  <p class="lobbySub">SMARTER AERIAL AI · TOUCH CONTROLS · 1:30 OVERTIME FOR TIED GAMES · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
+  <p class="lobbySub">SMARTER AERIAL AI · ANALOG TOUCH JOYSTICK · 1:30 OVERTIME · SHOTS TIEBREAKER · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
   <div class="playerIdentity">
    <div><label for="playerName">YOUR PLAYER NAME</label><p>Appears above your car and when you score. Tap your name, type it, then press SAVE NAME. Kept until this tab closes.</p></div>
    <div class="nameInputs"><input id="playerName" name="playerName" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="16" placeholder="Tap to type your name" value="YOU" aria-label="Your player name"><div class="nameButtons"><button id="saveName" type="button">✓ SAVE NAME</button><span id="nameSaved" role="status" aria-live="polite">Tap to change your name</span></div></div>
@@ -670,6 +684,9 @@ let pads=[];const padMat=new THREE.MeshStandardMaterial({color:0xffae28,emissive
 let onlineActive=false,onlineConnecting=false,onlineWS=null,onlineSlot=-1,onlineRoom='',onlineLatest=null;
 let onlineModels=new Map(),onlineInputClock=0,onlineLastGoalId=0,onlineLastPhase='play',onlineReplayExplosion=null;
 const keys={};let ballCam=true;let jumpQueued=false;let paused=false,finished=false,time=180,score=[0,0],bannerTime=0,goalPause=0;
+// Match shooting stats are real attacking touches aimed toward the opponent's net.
+// They are independent of kickoff/replay clocks and carry into overtime.
+let shots=[0,0],overtimeShots=[0,0],lastShotTime=[-999,-999],matchElapsed=0;
 let overtime=false,otExtra=0,pendingWinner=null;
 // Record recent gameplay for automatic slow-motion replays after every goal.
 const REPLAY_WINDOW=9.5,REPLAY_RATE=.70,REPLAY_FPS=30;
@@ -965,6 +982,42 @@ addEventListener('keyup',e=>keys[keyName(e)]=false);
 addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(!inLobby&&!onlineActive){paused=true;show('PAUSED',999)}});
 // Touch pads use Pointer Events with pointer capture; each finger can hold a
 // different button. No keyboard is required on iPad, iPhone or Android.
+// Left analog joystick: a single pointer controls both throttle and steering.
+// Other fingers can simultaneously press jump / boost / air roll buttons.
+const driveJoystick=document.getElementById('driveJoystick');
+const joystickThumb=document.getElementById('joystickThumb');
+const joystick={x:0,y:0,pointer:null};
+function updateJoystick(x,y){
+ const rect=driveJoystick.getBoundingClientRect();
+ const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+ const radius=Math.max(30,rect.width/2-34);
+ let dx=x-cx,dy=y-cy;
+ const length=Math.hypot(dx,dy);
+ if(length>radius){dx=dx/length*radius;dy=dy/length*radius;}
+ joystick.x=Math.abs(dx/radius)<.09?0:dx/radius;
+ joystick.y=Math.abs(dy/radius)<.09?0:dy/radius;
+ joystickThumb.style.transform=`translate(${dx}px, ${dy}px)`;
+}
+function releaseJoystick(){
+ joystick.pointer=null;joystick.x=0;joystick.y=0;
+ joystickThumb.style.transform='translate(0px, 0px)';
+ driveJoystick.classList.remove('active');
+}
+driveJoystick.addEventListener('pointerdown',e=>{
+ if(inLobby||finished||joystick.pointer!==null)return;
+ e.preventDefault();joystick.pointer=e.pointerId;
+ driveJoystick.setPointerCapture(e.pointerId);
+ driveJoystick.classList.add('active');updateJoystick(e.clientX,e.clientY);
+},{passive:false});
+driveJoystick.addEventListener('pointermove',e=>{
+ if(joystick.pointer!==e.pointerId)return;
+ e.preventDefault();updateJoystick(e.clientX,e.clientY);
+},{passive:false});
+for(const eventName of ['pointerup','pointercancel','lostpointercapture']){
+ driveJoystick.addEventListener(eventName,e=>{
+  if(joystick.pointer===e.pointerId)releaseJoystick();
+ });
+}
 const helpToggle=document.getElementById('helpToggle');
 const helpPanel=document.getElementById('info');
 function toggleHelp(){const showHelp=helpPanel.hidden;helpPanel.hidden=!showHelp;helpToggle.setAttribute('aria-expanded',String(showHelp));helpToggle.textContent=showHelp?'✕ CLOSE CONTROLS':'❔ CONTROLS';}
@@ -1000,7 +1053,7 @@ for(const button of document.querySelectorAll('#touchControls button')){
  },{passive:false});
  for(const ev of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(ev,e=>stopTouchKey(button,e.pointerId));
 }
-function clearTouchKeys(){for(const [button,pointer] of touchHeld)stopTouchKey(button,pointer);}
+function clearTouchKeys(){for(const [button,pointer] of touchHeld)stopTouchKey(button,pointer);releaseJoystick();}
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));function angleDiff(a,b){return Math.atan2(Math.sin(a-b),Math.cos(a-b))}function show(t,secs=1.5){let el=document.getElementById('banner');el.textContent=t;el.style.display=t?'block':'none';bannerTime=secs}
 function kickoff(){
@@ -1020,7 +1073,7 @@ function kickoff(){
  lastTouch=null;replayHistory=[];replayClock=0;lastReplaySample=-Infinity;captureReplayFrame(true);
 }
 function restart(){
- clearExplosions();clearDemoEffects();score=[0,0];time=180;overtime=false;otExtra=0;pendingWinner=null;finished=false;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];
+ clearExplosions();clearDemoEffects();score=[0,0];shots=[0,0];overtimeShots=[0,0];lastShotTime=[-999,-999];matchElapsed=0;time=180;overtime=false;otExtra=0;pendingWinner=null;finished=false;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];
  document.getElementById('winnerScreen').hidden=true;
  document.getElementById('lastScorer').style.display='none';
  document.getElementById('replayBadge').style.display='none';show('',0);kickoff();
@@ -1047,7 +1100,8 @@ function startMatch(){
 }
 function updateHud(){
  document.getElementById('orange').textContent=score[0];document.getElementById('blue').textContent=score[1];
- let t=Math.ceil(overtime&&time<=0?otExtra:time);document.getElementById('clock').textContent=(overtime&&time<=0?'+':'')+`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+ document.getElementById('shotsHud').textContent=`SHOTS · ORANGE ${shots[0]} — ${shots[1]} BLUE`;
+ let t=Math.ceil(Math.max(0,time));document.getElementById('clock').textContent=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
  document.getElementById('overtimeBadge').style.display=overtime?'inline':'none';
  const isTraining=typeof mode==='string';
  document.getElementById('top').style.display=isTraining?'none':'flex';
@@ -1153,14 +1207,26 @@ function goal(team){
  goalPause=1.7; // Explosion first, then cinematic slow-motion replay.
  updateHud();
 }
-// Regulation tie (including 0-0) starts a 90-second golden-goal overtime.
-// If both sides survive the full 90 seconds, the clock counts upward in
-// sudden death until somebody scores: we always have a real winner.
+// Any tied regulation score starts a fixed 90-second overtime.
+// If no goal is scored, shots decide the match at 0:00. No endless overtime.
 function startOvertime(){
- overtime=true;otExtra=0;time=90;show('OVERTIME · NEXT GOAL WINS!',3);
+ overtime=true;otExtra=0;time=90;show('OVERTIME · 1:30 · MOST SHOTS WINS IF NO GOAL!',3);
  updateHud();
 }
-function finishMatch(team){
+function finishOvertimeOnShots(){
+ const a=shots[0],b=shots[1];
+ let team,reason;
+ if(a!==b){team=a>b?0:1;reason='OVERTIME TIEBREAKER · MOST SHOTS';}
+ else if(overtimeShots[0]!==overtimeShots[1]){
+  team=overtimeShots[0]>overtimeShots[1]?0:1;
+  reason='SHOTS TIED · MORE SHOTS DURING OVERTIME';
+ }else{
+  team=Math.random()<.5?0:1;
+  reason='SHOTS COMPLETELY TIED · FAIR COIN TOSS';
+ }
+ finishMatch(team,reason);
+}
+function finishMatch(team,reason='FINAL SCORE'){
  finished=true;pendingWinner=null;goalPause=0;replayActive=false;
  show('',0);
  const label=team===0?'ORANGE TEAM':'BLUE TEAM';
@@ -1168,6 +1234,7 @@ function finishMatch(team){
  const title=document.getElementById('winnerTitle');
  title.textContent=label+' WINS!';title.style.color=team===0?'#ffad64':'#78cbff';
  document.getElementById('winnerScore').textContent=score[0]+' — '+score[1]+(overtime?' · OT':'');
+ document.getElementById('winnerReason').textContent=reason+` · SHOTS: ORANGE ${shots[0]} — ${shots[1]} BLUE`;
  const podium=document.getElementById('winnerPlayers');podium.replaceChildren();
  for(const c of names){
   const card=document.createElement('div');card.className='winnerPlayer';
@@ -1370,6 +1437,8 @@ const tmpForward=new THREE.Vector3(),tmpRight=new THREE.Vector3(),rot=new THREE.
 // otherwise WASD works too. Up = forward, down = backward, diagonals combine.
 function currentDodgeInput(){
  const usingArrows=!!(keys.arrowup||keys.arrowdown||keys.arrowleft||keys.arrowright);
+ const usingKeys=usingArrows||keys.w||keys.s||keys.a||keys.d;
+ if(!usingKeys)return {up:joystick.y<-.25,down:joystick.y>.25,left:joystick.x<-.25,right:joystick.x>.25};
  return {up:usingArrows?!!keys.arrowup:!!keys.w,
    down:usingArrows?!!keys.arrowdown:!!keys.s,
    left:usingArrows?!!keys.arrowleft:!!keys.a,
@@ -1457,7 +1526,7 @@ function driving(c,throttle,steer,boost,dt,roll=0){
     c.a+=steer*3.15*dt*steeringResponse*reverseSteering;
     c.a=Math.atan2(Math.sin(c.a),Math.cos(c.a));
     const dx=Math.sin(c.a),dz=-Math.cos(c.a);
-    const accel=throttle>0?(c.boosting?850:510):throttle<0?-390:0;
+    const accel=throttle>0?(c.boosting?850:510)*clamp(throttle,0,1):throttle<0?-390*clamp(-throttle,0,1):0;
     c.vx+=dx*accel*dt;c.vz+=dz*accel*dt;
     const drag=Math.exp(-1.55*dt);c.vx*=drag;c.vz*=drag;
     // Stronger sideways tire grip lets Fox turn instead of sliding straight.
@@ -1498,6 +1567,24 @@ function driving(c,throttle,steer,boost,dt,roll=0){
   c.mesh.position.set(c.x,c.y,c.z);
   c.mesh.quaternion.copy(c.q);
 }
+function registerShot(c){
+ if(typeof mode!=='number'||finished||goalPause>0)return;
+ const team=c.team,attack=team===0?-1:1;
+ const forwardSpeed=ball.vz*attack;
+ if(forwardSpeed<125||matchElapsed-lastShotTime[team]<1.65)return;
+ const goalZ=attack*(FL-ball.r);
+ const seconds=Math.abs((goalZ-ball.z)/ball.vz);
+ if(!Number.isFinite(seconds)||seconds>8)return;
+ // Ignore touches that are clearly heading away from the goal mouth.
+ // Count potential shots, not every little dribble touch or a defensive clear.
+ const travel=Math.min(seconds,4.3);
+ const aimX=ball.x+ball.vx*travel*.72;
+ const aimY=ball.y+ball.vy*travel-230*travel*travel;
+ if(Math.abs(aimX)>GW+ball.r*3.0||aimY>GH+ball.r*3.0)return;
+ shots[team]++;
+ if(overtime)overtimeShots[team]++;
+ lastShotTime[team]=matchElapsed;
+}
 function touchCar(c){
   if(c.demoTimer>0)return;
   // Full 3-D collision works in the air, including under the ceiling and near walls.
@@ -1536,6 +1623,7 @@ function touchCar(c){
     }
   }
   ball.x=c.x+nx*(min+.5);ball.y=c.y+16+ny*(min+.5);ball.z=c.z+nz*(min+.5);
+  registerShot(c);
 }
 function updateBall(dt){
  ball.vy-=460*dt;
@@ -1807,6 +1895,7 @@ if((mode==='shots'||mode==='saves')&&!training.active){
   return;
 }
 replayClock+=dt;
+if(typeof mode==='number')matchElapsed+=dt;
 updateDemoState(dt);
 if(typeof mode==='number'){
  if(time>0){
@@ -1815,16 +1904,19 @@ if(typeof mode==='number'){
      if(!overtime){
        if(score[0]===score[1])startOvertime();
        else {finishMatch(score[0]>score[1]?0:1);return;}
-     }else{show('SUDDEN DEATH · NEXT GOAL WINS!',2.2);}
+     }else{finishOvertimeOnShots();return;}
    }
- }else if(overtime){otExtra+=dt;}
+ }
 }else if(mode!=='free'){
  training.elapsed+=dt;
  if(training.elapsed>training.limit){finishTrainingAttempt(false,mode==='shots'?'SHOT MISSED · TRY AGAIN':'SHOT NOT SAVED');return;}
 }
 // Save previous locations before movement for continuous car-car hit detection.
 const carPositionsBeforeMove=new Map([player,...activeBots].map(c=>[c,{x:c.x,y:c.y,z:c.z}]));
-const up=keys.w||keys.arrowup,down=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;
+const keyThrottle=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);
+const keySteer=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+const throttle=keyThrottle!==0?keyThrottle:-joystick.y;
+const steer=keySteer!==0?keySteer:joystick.x;
 if(jumpQueued){jump(player,currentDodgeInput());jumpQueued=false;}
   // Hold F to launch, tilt toward the sky, and use automatic rocket boost.
   // The camera still tracks the ball while the car's flight direction is independent.
@@ -1834,7 +1926,7 @@ if(jumpQueued){jump(player,currentDodgeInput());jumpQueued=false;}
     player.vy=Math.max(player.vy,JUMP_VELOCITY);
   }
   const playerRoll=((keys.x||keys.e)?1:0)-(keys.z?1:0);
-  driving(player,(up?1:0)-(down?1:0),(right?1:0)-(left?1:0),!!keys.shift,dt,playerRoll);
+  driving(player,throttle,steer,!!keys.shift,dt,playerRoll);
 if(mode==='free')player.boost=100;
 for(const bot of activeBots)aiControl(bot,dt);resolveCarCollisions(carPositionsBeforeMove);updateBall(dt);if(goalPause>0||((mode==='shots'||mode==='saves')&&!training.active))return;
 touchCar(player);for(const bot of activeBots)touchCar(bot);
