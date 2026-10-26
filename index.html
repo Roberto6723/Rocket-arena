@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fox Rocket Arena — Touch & Kickoff Update</title>
+<title>Fox Rocket Arena — Touch Fix & Rotating AI</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -140,6 +140,13 @@
  .lobbyPanel{padding:16px;border-radius:16px}
 }
 
+/* Native Safari touch controls: prevent selection menus and double-tap zoom
+   ONLY during gameplay. The lobby name input remains freely editable. */
+canvas,#hud,#touchControls,#touchControls *,#driveJoystick,#driveJoystick *{
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:none}
+#helpToggle,#lobbyButton{touch-action:manipulation;-webkit-touch-callout:none}
 /* Analog, independent multitouch joystick. Thumb follows finger continuously. */
 #driveJoystick{position:relative;width:150px;height:150px;border-radius:50%;border:2px solid #b2daf78c;background:radial-gradient(circle,#163e5dbb 0%,#0b243acc 70%,#071a2cfa 100%);box-shadow:inset 0 0 22px #000a,0 7px 25px #0008;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
 #driveJoystick.active{border-color:#ffcb7e;box-shadow:0 0 24px #ffa34a66,inset 0 0 20px #000a}
@@ -679,15 +686,66 @@ function selectCar(style){
  }
  document.getElementById('previewCarName').textContent=style.toUpperCase()+' PAINT';
 }
-const ai=makeCar(blueMat,'REX','viper');
+// Each AI has its own paint material so changing teams never recolors
+// the player's car or another bot. Same five named bots, fresh teams per match.
+function makeNamedBot(name,style,initialTeam,role,minMode,spawnX,spawnZ){
+ const paint=(initialTeam===0?orangeMat:blueMat).clone();
+ const bot=makeCar(paint,name,style);
+ return Object.assign(bot,{paint,team:initialTeam,role,minMode,spawnX,spawnZ});
+}
+const ai=makeNamedBot('REX','viper',1,'striker',1,0,-FL*.636);
 const allBots=[
- Object.assign(ai,{team:1,role:'striker',minMode:1,spawnX:0,spawnZ:-FL*.636}),
- Object.assign(makeCar(orangeMat,'ACE','comet'),{team:0,role:'support',minMode:2,spawnX:-FW*.362,spawnZ:FL*.655}),
- Object.assign(makeCar(blueMat,'NOVA','titan'),{team:1,role:'defender',minMode:2,spawnX:FW*.362,spawnZ:-FL*.655}),
- Object.assign(makeCar(orangeMat,'JET','viper'),{team:0,role:'defender',minMode:3,spawnX:FW*.438,spawnZ:FL*.715}),
- Object.assign(makeCar(blueMat,'BOLT','comet'),{team:1,role:'support',minMode:3,spawnX:-FW*.438,spawnZ:-FL*.715})
+ ai,
+ makeNamedBot('ACE','comet',0,'support',2,-FW*.362,FL*.655),
+ makeNamedBot('NOVA','titan',1,'defender',2,FW*.362,-FL*.655),
+ makeNamedBot('JET','viper',0,'defender',3,FW*.438,FL*.715),
+ makeNamedBot('BOLT','comet',1,'support',3,-FW*.438,-FL*.715)
 ];
 let activeBots=[ai],mode=1,inLobby=true;
+// Slot zero is the 1v1 opponent, slots 1/2 add the 2v2 teammate and opponent;
+// slots 3/4 add another teammate and opponent for 3v3.
+const aiMatchSlots=[
+ {minMode:1,team:1,role:'striker',spawnX:0,spawnZ:-FL*.636},
+ {minMode:2,team:0,role:'support',spawnX:-FW*.362,spawnZ:FL*.655},
+ {minMode:2,team:1,role:'defender',spawnX:FW*.362,spawnZ:-FL*.655},
+ {minMode:3,team:0,role:'defender',spawnX:FW*.438,spawnZ:FL*.715},
+ {minMode:3,team:1,role:'support',spawnX:-FW*.438,spawnZ:-FL*.715}
+];
+let lastMatchRoster=null;
+function rotateAIMatchups(){
+ if(typeof mode!=='number'||onlineActive)return;
+ const previous=lastMatchRoster;
+ const previousTeamNames=previous?previous.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=mode).sort().join('|'):'';
+ const possible=allBots.slice();
+ let chosen=null;
+ for(let attempt=0;attempt<35;attempt++){
+  const candidate=possible.slice();
+  for(let i=candidate.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [candidate[i],candidate[j]]=[candidate[j],candidate[i]];
+  }
+  const names=candidate.map(b=>b.name);
+  const currentTeamNames=names.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=mode).sort().join('|');
+  // Never repeat the exact roster, and make 1v1 opponent/2v2 teammates change.
+  if(!previous||(names[0]!==previous[0]&&(mode===1||currentTeamNames!==previousTeamNames))){
+   chosen=candidate;break;
+  }
+ }
+ // Deterministic fallback guarantees a change even with unlucky random draws.
+ if(!chosen){
+  const shift=1+Math.floor(Math.random()*4);
+  chosen=possible.slice(shift).concat(possible.slice(0,shift));
+  if(previous&&chosen[0].name===previous[0])chosen.reverse();
+ }
+ chosen.forEach((bot,i)=>{
+  const slot=aiMatchSlots[i];
+  Object.assign(bot,slot);
+  bot.paint.color.set(bot.team===0?colors.car:'#0662d8');
+  paintNameSprite(bot.nameplate,bot.name,bot.team===0?'#ffad63':'#65beff');
+ });
+ lastMatchRoster=chosen.map(b=>b.name);
+ // configureMode uses minMode/team to select each side, not fixed AI names.
+}
 let kickoffAge=0,kickoffNumber=0;
 function planAIKickoff(){
  kickoffAge=0;kickoffNumber++;
@@ -729,6 +787,7 @@ function getScoringMessage(team){
 }
 function applyColors(){
  orangeMat.color.set(colors.car);
+ for(const bot of allBots)bot.paint.color.set(bot.team===0?colors.car:'#0662d8');
  for(const material of homeGoalMaterials)material.color.set(onlineActive&&onlineSlot%2?'#ffa238':colors.goal);
  for(const material of awayGoalMaterials)material.color.set(onlineActive&&onlineSlot%2?colors.goal:'#32baff');
  const preview=document.getElementById('lobbyPreview');
@@ -1055,6 +1114,24 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>keys[keyName(e)]=false);
 addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(!inLobby&&!onlineActive){paused=true;show('PAUSED',999)}});
+// Stop Safari from selecting button labels, invoking the text callout, or
+// double-tap zooming while two or more fingers operate the controls.
+// Do not affect the lobby: the name editor still accepts text and selection.
+const touchGameControls=document.getElementById('touchControls');
+for(const type of ['touchstart','touchmove','touchend','touchcancel']){
+ touchGameControls.addEventListener(type,e=>{
+  if(e.cancelable)e.preventDefault();
+ },{passive:false});
+}
+for(const type of ['selectstart','contextmenu','dblclick']){
+ touchGameControls.addEventListener(type,e=>e.preventDefault());
+}
+// Game canvas is not an editable element; prevent accidental touch gestures.
+for(const type of ['touchstart','touchmove']){
+ renderer.domElement.addEventListener(type,e=>{
+  if(!inLobby&&e.cancelable)e.preventDefault();
+ },{passive:false});
+}
 // Touch pads use Pointer Events with pointer capture; each finger can hold a
 // different button. No keyboard is required on iPad, iPhone or Android.
 // Left analog joystick: a single pointer controls both throttle and steering.
@@ -1188,7 +1265,7 @@ function openLobby(){
  document.getElementById('lobby').hidden=false;
 }
 function startMatch(){
- commitPlayerName();applyColors();configureMode(mode);inLobby=false;
+ commitPlayerName();rotateAIMatchups();applyColors();configureMode(mode);inLobby=false;
  document.getElementById('lobby').hidden=true;
  document.getElementById('hud').style.display='block';
  clearTouchKeys();Object.keys(keys).forEach(k=>keys[k]=false);
