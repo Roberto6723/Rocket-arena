@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fox Rocket Arena — Touch Fix & Rotating AI</title>
+<title>Fox Rocket Arena — Heatseeker, Hoops & Matchup Preview</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -196,8 +196,21 @@ canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:non
 #lobbyQualityRow button{background:#0b2437;color:#dceefe;border:1px solid #7c9db9;border-radius:10px;min-height:42px;padding:8px 12px;font-weight:850;cursor:pointer;touch-action:manipulation}
 #lobbyQualityRow button[aria-pressed="true"]{border-color:#ffc278;background:#583c24;color:#fff}
 #lobbyQualityNote{font-size:11px;color:#bdcfe0;flex-basis:100%}
+/* Special modes and next-match lineup */
+.specialModes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.specialModes .modeChoice{border-color:#5cb4ea8c;background:linear-gradient(125deg,#0f3852,#19223a)}
+.specialModes .modeChoice.selected{border-color:#ffb36b;background:#33445e}
+#teamPreview{border:1px solid #80a9c578;background:#0a2235;border-radius:15px;padding:13px 16px;margin:10px 0 19px}
+.previewTop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+#shuffleAI{border:1px solid #88b8e2;border-radius:9px;background:#17466a;color:#fff;font-size:12px;font-weight:900;min-height:39px;padding:8px 12px;cursor:pointer;touch-action:manipulation}
+.previewLineups{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.previewRoster{background:#0e2c44;border-radius:11px;padding:10px 12px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.previewRoster b{display:block;font-size:11px;letter-spacing:.09em}
+#previewOrange b{color:#ffb36b}#previewBlue b{color:#79c9ff}
+#specialModeTag{position:absolute;top:116px;left:50%;transform:translateX(-50%);font-weight:900;letter-spacing:.09em;color:#ffcf83;text-shadow:0 3px 7px #000;white-space:nowrap;font-size:12px}
+@media(max-width:650px){.specialModes{gap:8px}.specialModes .modeChoice{padding:12px 10px}.specialModes .modeChoice strong{font-size:18px}#teamPreview{padding:10px}.previewRoster{font-size:12px;padding:8px}.previewTop{flex-wrap:wrap}#specialModeTag{top:111px;font-size:10px}}
 </style></head><body>
-<div id="hud"><button id="helpToggle" type="button" aria-controls="info" aria-expanded="false">❔ CONTROLS</button><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="shotsHud" aria-live="off">SHOTS · ORANGE 0 — 0 BLUE</div><div id="info" hidden><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Automatic slow-motion replay · ENTER skips</div><div><b>OVERTIME:</b> 1:30 max; next goal wins, otherwise more shots decides the winner.</div><div><b>TOUCH:</b> Left joystick + larger right-side controls. Tap ⚙ GRAPHICS to change quality on iPad / phone.</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button>
+<div id="hud"><button id="helpToggle" type="button" aria-controls="info" aria-expanded="false">❔ CONTROLS</button><div id="camState" class="on" aria-live="polite">BALL CAM ON · Q TO TOGGLE</div><div id="top"><span class="orange" id="orange">0</span><span>—</span><span class="blue" id="blue">0</span><span id="overtimeBadge">OVERTIME</span><span id="clock">3:00</span></div><div id="shotsHud" aria-live="off">SHOTS · ORANGE 0 — 0 BLUE</div><div id="info" hidden><b>FOX ARENA · AERIAL STADIUM</b><div>GROUND: W/↑ forward · S/↓ reverse · A/← and D/→ turn</div><div>SPACE jump (~95m) · SPACE again + ↑ ↓ ← → = directional dodge</div><div style="color:#ffe482"><b>HOLD F = EASY AERIAL + AUTO BOOST</b></div><div>AIR: S nose UP · W nose DOWN</div><div>AIR: A/D yaw · <b>Z = ROLL LEFT · X = ROLL RIGHT</b> (E also right)</div><div>SHIFT: rocket boost · <b>Hold W + SHIFT and ram opponents to DEMO!</b></div><div>P pause · R restart · G graphics</div><div><b>GOALS:</b> Slow-motion replay · ENTER skips</div><div><b>HEATSEEKER:</b> After a car touches the ball, it homes toward the other goal and speeds up.</div><div><b>HOOPS:</b> Fly the ball over a basket and score as it falls DOWN through the rim.</div><div><b>OVERTIME:</b> 1:30 max; next goal wins, otherwise more shots decides the winner.</div><div><b>TOUCH:</b> Left joystick + larger right-side controls. Tap ⚙ GRAPHICS to change quality on iPad / phone.</div><div><b>Q = toggle ball camera ON/OFF</b> · Rounded walls · Air-dribble ramps</div><div style="color:#ffb569"><span id="attackingGoal">Your team attacks the blue goal</span></div><div>G — Graphics quality · H — HUD · ESC — Lobby</div><div id="qualityName">Quality: HIGH</div></div><div id="flight">ALTITUDE <b id="altitude">0</b> m · <span id="status">ON GROUND</span><div id="tip">HOLD F TO FLY! · Or Space → S → Shift</div><div id="airRollState" aria-live="off">AIR ROLL: Z ◀ LEFT · X ▶ RIGHT</div></div><div id="boost">BOOST <span id="boostnum">100</span><div id="track"><div id="fill"></div></div></div><div id="modeHud">1v1 · YOU vs AI</div><div id="specialModeTag" hidden></div><div id="demoToast" aria-live="polite"></div><div id="onlineBadge" style="display:none"></div><div id="lastScorer" aria-live="polite"></div><div id="trainingPanel"><div id="trainingTitle">FREE PLAY</div><div id="trainingStats">Unlimited time and boost</div></div><div id="trainingHelp"></div><button id="lobbyButton" type="button">☰ LOBBY · ESC</button>
 <div id="touchControls" aria-label="Touch game controls">
   <div class="touchCluster"><div>
    <div class="touchLabel">DRAG TO DRIVE / STEER</div>
@@ -233,7 +246,7 @@ canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:non
  <div class="lobbyPanel">
   <div class="lobbyEyebrow">WELCOME TO THE ARENA</div>
   <h1 class="lobbyTitle" id="lobbyTitle">FOX <em>ROCKET ARENA</em></h1>
-  <p class="lobbySub">VARIED AI KICKOFFS · RELIABLE TOUCH JOYSTICK · GRAPHICS SETTINGS · 1:30 OVERTIME · WINNER PODIUM! Play offline 1v1, 2v2 or 3v3 with AI, or train in Free Play.</p>
+  <p class="lobbySub">HEATSEEKER + HOOPS · SEE YOUR AI OPPONENTS BEFORE PLAYING · 1v1 / 2v2 / 3v3 · TOUCH JOYSTICK · FREE PLAY + TRAINING.</p>
   <div class="playerIdentity">
    <div><label for="playerName">YOUR PLAYER NAME</label><p>Appears above your car and when you score. Tap your name, type it, then press SAVE NAME. Kept until this tab closes.</p></div>
    <div class="nameInputs"><input id="playerName" name="playerName" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="16" placeholder="Tap to type your name" value="YOU" aria-label="Your player name"><div class="nameButtons"><button id="saveName" type="button">✓ SAVE NAME</button><span id="nameSaved" role="status" aria-live="polite">Tap to change your name</span></div></div>
@@ -250,6 +263,15 @@ canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:non
    <button type="button" class="modeChoice selected" data-mode="1" aria-pressed="true"><strong>1v1</strong><span>You vs Rex</span></button>
    <button type="button" class="modeChoice" data-mode="2" aria-pressed="false"><strong>2v2</strong><span>You + Ace vs Rex + Nova</span></button>
    <button type="button" class="modeChoice" data-mode="3" aria-pressed="false"><strong>3v3</strong><span>You + Ace + Jet vs Rex + Nova + Bolt</span></button>
+  </div>
+  <div class="lobbyHeading" style="margin-top:18px">SPECIAL GAME MODES</div>
+  <div class="specialModes" role="group" aria-label="Special game modes">
+   <button type="button" class="modeChoice" data-mode="heatseeker" aria-pressed="false"><strong>🔥 HEATSEEKER</strong><span>2v2 · Car touches send a faster homing ball toward the other goal</span></button>
+   <button type="button" class="modeChoice" data-mode="hoops" aria-pressed="false"><strong>🏀 HOOPS</strong><span>2v2 · Score by dropping the ball through an elevated basketball rim</span></button>
+  </div>
+  <div id="teamPreview" aria-live="polite">
+   <div class="previewTop"><div class="lobbyHeading" style="margin:0">NEXT MATCH · AI LINEUP</div><button id="shuffleAI" type="button">🔀 CHANGE AI</button></div>
+   <div class="previewLineups"><div class="previewRoster" id="previewOrange"><b>🟠 YOUR TEAM</b><span>YOU</span></div><div class="previewRoster" id="previewBlue"><b>🔵 OPPONENTS</b><span>REX</span></div></div>
   </div>
   <div class="lobbyHeading" style="margin-top:18px">PRACTICE &amp; TRAINING</div>
   <div class="modeRow trainingModes" role="group" aria-label="Practice mode">
@@ -333,6 +355,7 @@ function stripe(x,z,w,d,m=line){box(w,.15,d,m,x,.2,z)}
 // Full field 1,650 × 2,640 (up from 1,320 × 2,100). Goal openings 520 wide × 195 high.
 // Field, nets, collision checks, goal triggers and AI all share the same constants.
 const FW=825,FL=1320,GW=260,GH=195,GOAL_DEPTH=86,WH=415,ROOF_Y=540;
+const HOOP_Y=238,HOOP_RADIUS=124,HOOP_OFFSET=225;
 // Smooth 110-unit quarter-pipe transitions and 150-unit rounded arena corners.
 const RAMP_RADIUS=110,CORNER_RADIUS=150,CAR_WALL_INSET=18;box(FW*2,3,FL*2,green,0,-2,0);const turf1=new THREE.MeshStandardMaterial({map:turfTexture,color:0xe4ffe8,roughness:1}),turf2=new THREE.MeshStandardMaterial({map:turfTexture,color:0xb9e0bd,roughness:1});for(let z=-FL;z<FL;z+=50){let stripeT=new THREE.MeshStandardMaterial({map:turfTexture,bumpMap:turfTexture,bumpScale:.35,color:Math.floor((z+FL)/50)%2?0xc5ead1:0xf2fff2,roughness:1});box(FW*2,.16,50,stripeT,0,.08,z+25)}
 stripe(0,0,FW*2,2.2);stripe(-FW,0,2.3,FL*2);stripe(FW,0,2.3,FL*2);stripe(0,-FL,FW*2,2);stripe(0,FL,FW*2,2);
@@ -416,6 +439,7 @@ for(const side of [-1,1])for(const z of [-FL+215,-FL+425,0,FL-425,FL-215]){
 
 // Wide goal mouths with taller crossbars, enclosed back nets and visible goal depth.
 const homeGoalMaterials=[],awayGoalMaterials=[];
+const soccerGoalStart=scene.children.length;
 for(let sign of [-1,1]){
   // Only a header above the goal: curved wall panels handle the rest.
   box(GW*2,WH-GH,6,wall,0,GH+(WH-GH)/2,sign*(FL+4));
@@ -436,6 +460,46 @@ for(let sign of [-1,1]){
   const topNet=new THREE.Mesh(new THREE.PlaneGeometry(GW*2,GOAL_DEPTH),netmat);
   topNet.rotation.x=-Math.PI/2;topNet.position.set(0,GH,sign*(FL+GOAL_DEPTH/2));scene.add(topNet);
   box(GW*2,2,5,frame,0,.7,sign*(FL+GOAL_DEPTH));
+}
+// Both soccer goal and basketball hoop meshes exist; only the selected game-mode nets appear.
+const soccerGoalObjects=scene.children.slice(soccerGoalStart);
+const basketballObjects=[];
+const hoopRims=[];
+const hoopsGroup=new THREE.Group();scene.add(hoopsGroup);
+const hoopRimMaterial=[mat(0x44bcff,.2,.5),mat(0xffa547,.2,.5)];
+for(const sign of [-1,1]){
+ const team=sign<0?0:1,centerZ=sign*(FL-HOOP_OFFSET);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(HOOP_RADIUS,8,12,76),hoopRimMaterial[team]);
+ rim.rotation.x=-Math.PI/2;rim.position.set(0,HOOP_Y,centerZ);hoopsGroup.add(rim);
+ const inner=new THREE.Mesh(new THREE.TorusGeometry(HOOP_RADIUS-8,2.3,8,76),new THREE.MeshBasicMaterial({color:0xffffff}));
+ inner.rotation.x=-Math.PI/2;inner.position.copy(rim.position);hoopsGroup.add(inner);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(370,155,10),mat(0xeaf5fb,.35,.16));
+ board.position.set(0,HOOP_Y+83,sign*(FL-52));hoopsGroup.add(board);
+ const border=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(372,158,12)),new THREE.LineBasicMaterial({color:0x3c5464}));
+ border.position.copy(board.position);hoopsGroup.add(border);
+ const square=new THREE.Mesh(new THREE.PlaneGeometry(150,98),new THREE.MeshBasicMaterial({color:0xff944e,transparent:true,opacity:.50,side:THREE.DoubleSide}));
+ square.position.set(0,HOOP_Y+40,sign*(FL-45));hoopsGroup.add(square);
+ const supportMat=mat(0x7596a6,.3,.78);
+ const support=new THREE.Mesh(new THREE.CylinderGeometry(8,8,HOOP_OFFSET-60,10),supportMat);
+ support.rotation.x=Math.PI/2;support.position.set(0,HOOP_Y,sign*(FL-(HOOP_OFFSET+60)/2));hoopsGroup.add(support);
+ // Suspended tapered nets leave a clear ball entry from above.
+ for(let i=0;i<20;i++){
+   const angle=i/20*Math.PI*2;
+   const top=new THREE.Vector3(Math.cos(angle)*HOOP_RADIUS,HOOP_Y-5,centerZ+Math.sin(angle)*HOOP_RADIUS);
+   const bottomAngle=angle+.12;
+   const bottom=new THREE.Vector3(Math.cos(bottomAngle)*(HOOP_RADIUS*.58),HOOP_Y-95,centerZ+Math.sin(bottomAngle)*(HOOP_RADIUS*.58));
+   const points=[top,bottom];
+   const net=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0xeaf9ff,transparent:true,opacity:.65}));hoopsGroup.add(net);
+ }
+ // Block the football goal mouth in Hoops; score only by passing through the elevated rim.
+ const gate=new THREE.Mesh(new THREE.BoxGeometry(GW*2+10,GH,11),mat(0x264f5e,.58,.12));
+ gate.position.set(0,GH/2,sign*(FL+1));hoopsGroup.add(gate);
+ hoopRims.push({team,x:0,z:centerZ,y:HOOP_Y});
+}
+hoopsGroup.visible=false;
+function syncArenaMode(){
+ const hoops=mode==='hoops';hoopsGroup.visible=hoops;
+ for(const mesh of soccerGoalObjects)mesh.visible=!hoops;
 }
 // Fine chalk paint, penalty boxes, corner arcs and grass-length striping.
 for(const sign of [-1,1]){
@@ -701,7 +765,18 @@ const allBots=[
  makeNamedBot('JET','viper',0,'defender',3,FW*.438,FL*.715),
  makeNamedBot('BOLT','comet',1,'support',3,-FW*.438,-FL*.715)
 ];
-let activeBots=[ai],mode=1,inLobby=true;
+let activeBots=[ai],mode=1,inLobby=true,rosterPreparedForMode=null;
+function competitiveMode(value=mode){return typeof value==='number'||value==='heatseeker'||value==='hoops';}
+function teamSize(value=mode){return typeof value==='number'?value:(value==='heatseeker'||value==='hoops'?2:0);}
+function matchLabel(value=mode){return typeof value==='number'?`${value}v${value}`:value==='heatseeker'?'HEATSEEKER · 2v2':value==='hoops'?'HOOPS · 2v2':'';}
+function updateMatchPreview(){
+ const panel=document.getElementById('teamPreview');panel.hidden=!competitiveMode();
+ if(!competitiveMode())return;
+ const home=[player,...activeBots.filter(b=>b.team===0)].map(c=>c.name);
+ const away=activeBots.filter(b=>b.team===1).map(c=>c.name);
+ document.querySelector('#previewOrange span').textContent=home.join(' + ');
+ document.querySelector('#previewBlue span').textContent=away.join(' + ');
+}
 // Slot zero is the 1v1 opponent, slots 1/2 add the 2v2 teammate and opponent;
 // slots 3/4 add another teammate and opponent for 3v3.
 const aiMatchSlots=[
@@ -713,9 +788,9 @@ const aiMatchSlots=[
 ];
 let lastMatchRoster=null;
 function rotateAIMatchups(){
- if(typeof mode!=='number'||onlineActive)return;
+ if(!competitiveMode()||onlineActive)return;
  const previous=lastMatchRoster;
- const previousTeamNames=previous?previous.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=mode).sort().join('|'):'';
+ const previousTeamNames=previous?previous.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=teamSize()).sort().join('|'):'';
  const possible=allBots.slice();
  let chosen=null;
  for(let attempt=0;attempt<35;attempt++){
@@ -725,9 +800,9 @@ function rotateAIMatchups(){
    [candidate[i],candidate[j]]=[candidate[j],candidate[i]];
   }
   const names=candidate.map(b=>b.name);
-  const currentTeamNames=names.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=mode).sort().join('|');
+  const currentTeamNames=names.filter((name,i)=>aiMatchSlots[i].team===0&&aiMatchSlots[i].minMode<=teamSize()).sort().join('|');
   // Never repeat the exact roster, and make 1v1 opponent/2v2 teammates change.
-  if(!previous||(names[0]!==previous[0]&&(mode===1||currentTeamNames!==previousTeamNames))){
+  if(!previous||(names[0]!==previous[0]&&(teamSize()===1||currentTeamNames!==previousTeamNames))){
    chosen=candidate;break;
   }
  }
@@ -798,21 +873,30 @@ function applyColors(){
  for(const key of ['car','goal','explosion'])document.getElementById(key+'Hex').textContent=colors[key].toUpperCase();
 }
 function configureMode(next){
+ const modeChanged=mode!==next;
  mode=next;
- activeBots=typeof mode==='number'?allBots.filter(b=>mode>=b.minMode):[];
+ if(modeChanged)rosterPreparedForMode=null;
+ if(inLobby&&competitiveMode()&&!onlineActive&&rosterPreparedForMode!==mode){
+  rotateAIMatchups();rosterPreparedForMode=mode;
+ }
+ activeBots=competitiveMode()?allBots.filter(b=>teamSize()>=b.minMode):[];
  for(const bot of allBots)bot.mesh.visible=activeBots.includes(bot);
  document.querySelectorAll('.modeChoice').forEach(button=>{
   const selected=button.dataset.mode===String(mode);
   button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
  });
  const titles={free:'FREE PLAY · OPEN FIELD',shots:'SHOT TRAINING · HIT THE BLUE GOAL',saves:'SAVE TRAINING · DEFEND YOUR GOAL'};
- document.getElementById('modeHud').textContent=typeof mode==='number'?mode+'v'+mode+' · '+[player,...activeBots.filter(b=>b.team===0)].map(b=>b.name).join(', ')+' vs '+activeBots.filter(b=>b.team===1).map(b=>b.name).join(', '):titles[mode];
- document.getElementById('startGame').textContent=typeof mode==='number'?'▶ START MATCH':mode==='free'?'▶ START FREE PLAY':mode==='shots'?'▶ START SHOT TRAINING':'▶ START SAVE TRAINING';
+ document.getElementById('modeHud').textContent=competitiveMode()?matchLabel()+' · '+[player,...activeBots.filter(b=>b.team===0)].map(b=>b.name).join(', ')+' vs '+activeBots.filter(b=>b.team===1).map(b=>b.name).join(', '):titles[mode];
+ document.getElementById('startGame').textContent=competitiveMode()?'▶ START '+(mode==='heatseeker'?'HEATSEEKER':mode==='hoops'?'HOOPS':'MATCH'):mode==='free'?'▶ START FREE PLAY':mode==='shots'?'▶ START SHOT TRAINING':'▶ START SAVE TRAINING';
+ document.getElementById('specialModeTag').textContent=mode==='heatseeker'?'🔥 HOMING BALL':mode==='hoops'?'🏀 SCORE THROUGH THE RIM':'';
+ document.getElementById('specialModeTag').hidden=!(mode==='heatseeker'||mode==='hoops');
+ updateMatchPreview();syncArenaMode();
 }
 
 const BALL_RADIUS=42; // 24% bigger than the previous 34-unit ball; sphere mesh, floor, wall, car and goal physics all use this radius.
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS,64,48),new THREE.MeshPhysicalMaterial({color:0xe9e9e5,metalness:.05,roughness:.43,clearcoat:.35,clearcoatRoughness:.32,envMapIntensity:1.1}));ballMesh.castShadow=true;scene.add(ballMesh);
 const seams=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(BALL_RADIUS,1)),new THREE.LineBasicMaterial({color:0x5a6670,transparent:true,opacity:.5}));ballMesh.add(seams);const ball={x:0,z:0,y:BALL_RADIUS,vx:0,vz:0,vy:0,r:BALL_RADIUS};
+let seekerTeam=null,seekerSpeed=470,seekerTouches=0,seekerKickoffReady=false;
 let pads=[];const padMat=new THREE.MeshStandardMaterial({color:0xffae28,emissive:0xff7200,emissiveIntensity:.8});for(let x of [-FW*.68,-FW*.34,0,FW*.34,FW*.68])for(let z of [-FL*.66,FL*.66]){let o=cyl(12,1.8,padMat,x,1.4,z);pads.push({x,z,mesh:o,delay:0})}
 // Real online rooms run authoritative car/ball physics on multiplayer_server.py.
 let onlineActive=false,onlineConnecting=false,onlineWS=null,onlineSlot=-1,onlineRoom='',onlineLatest=null;
@@ -1243,7 +1327,7 @@ function kickoff(){
  clearDemoEffects();
  jumpQueued=false;Object.assign(ball,{x:0,z:0,y:BALL_RADIUS,vx:0,vz:0,vy:0});ballMesh.position.set(0,BALL_RADIUS,0);ballMesh.visible=true;
  planAIKickoff();
- lastTouch=null;replayHistory=[];replayClock=0;lastReplaySample=-Infinity;captureReplayFrame(true);
+ seekerTeam=null;seekerSpeed=470;seekerTouches=0;seekerKickoffReady=false;lastTouch=null;replayHistory=[];replayClock=0;lastReplaySample=-Infinity;captureReplayFrame(true);
 }
 function restart(){
  clearExplosions();clearDemoEffects();score=[0,0];shots=[0,0];overtimeShots=[0,0];lastShotTime=[-999,-999];matchElapsed=0;time=180;overtime=false;otExtra=0;pendingWinner=null;finished=false;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;replayGoalPosition=null;pendingReplay=[];
@@ -1261,11 +1345,12 @@ function openLobby(){
  inLobby=true;paused=false;goalPause=0;replayActive=false;replayPostroll=-1;pendingReplay=[];training.active=false;training.wait=0;
  clearExplosions();clearDemoEffects();show('',0);clearTouchKeys();Object.keys(keys).forEach(k=>keys[k]=false);
  document.getElementById('replayBadge').style.display='none';
+ rosterPreparedForMode=null;configureMode(mode);
  document.getElementById('hud').style.display='none';
  document.getElementById('lobby').hidden=false;
 }
 function startMatch(){
- commitPlayerName();rotateAIMatchups();applyColors();configureMode(mode);inLobby=false;
+ commitPlayerName();if(competitiveMode()&&rosterPreparedForMode!==mode)rotateAIMatchups();applyColors();inLobby=false;rosterPreparedForMode=null;configureMode(mode);
  document.getElementById('lobby').hidden=true;
  document.getElementById('hud').style.display='block';
  clearTouchKeys();Object.keys(keys).forEach(k=>keys[k]=false);
@@ -1276,7 +1361,7 @@ function updateHud(){
  document.getElementById('shotsHud').textContent=`SHOTS · ORANGE ${shots[0]} — ${shots[1]} BLUE`;
  let t=Math.ceil(Math.max(0,time));document.getElementById('clock').textContent=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
  document.getElementById('overtimeBadge').style.display=overtime?'inline':'none';
- const isTraining=typeof mode==='string';
+ const isTraining=!competitiveMode();
  document.getElementById('top').style.display=isTraining?'none':'flex';
  document.getElementById('modeHud').style.display=isTraining?'none':'block';
  document.getElementById('trainingPanel').style.display=isTraining?'block':'none';
@@ -1578,7 +1663,7 @@ function moveAlongWall(c,dt,throttle){
 function collideBallWithBowl(){
  // Sphere against a circular concave floor/wall fillet. Correct both
  // position and velocity along the true curved normal so balls roll UP ramps.
- const w=bowlBoundary(ball.x,ball.z,ball.y+ball.r<GH-4);
+ const w=bowlBoundary(ball.x,ball.z,mode!=='hoops'&&ball.y+ball.r<GH-4);
  const r=RAMP_RADIUS-ball.r;
  if(w.s>0&&ball.y<RAMP_RADIUS){
   const dy=ball.y-RAMP_RADIUS,dist=Math.hypot(w.s,dy);
@@ -1712,7 +1797,7 @@ function driving(c,throttle,steer,boost,dt,roll=0){
     c.x+=c.vx*dt;c.z+=c.vz*dt;
     if(c.onGround){
       c.y=0;c.q.setFromAxisAngle(UP,-c.a);
-      const b=bowlBoundary(c.x,c.z,Math.abs(c.x)<GW+18);
+      const b=bowlBoundary(c.x,c.z,mode!=='hoops'&&Math.abs(c.x)<GW+18);
       const outward=c.vx*b.nx+c.vz*b.nz;
       if(b.s>=0&&outward>10){
         // Begin the ramp at the TRUE floor level, keeping speed from the approach.
@@ -1728,7 +1813,7 @@ function driving(c,throttle,steer,boost,dt,roll=0){
       moveAlongWall(c,dt,throttle);
     }else{
       // Don't leave the rounded boundary even when reversing into a corner.
-      const b=bowlBoundary(c.x,c.z,Math.abs(c.x)<GW+18);
+      const b=bowlBoundary(c.x,c.z,mode!=='hoops'&&Math.abs(c.x)<GW+18);
       if(b.s>RAMP_RADIUS-18){
        c.x-=b.nx*(b.s-(RAMP_RADIUS-18));
        c.z-=b.nz*(b.s-(RAMP_RADIUS-18));
@@ -1741,8 +1826,16 @@ function driving(c,throttle,steer,boost,dt,roll=0){
   c.mesh.quaternion.copy(c.q);
 }
 function registerShot(c){
- if(typeof mode!=='number'||finished||goalPause>0)return;
+ if(!competitiveMode()||finished||goalPause>0)return;
  const team=c.team,attack=team===0?-1:1;
+ if(mode==='heatseeker'){
+   if(matchElapsed-lastShotTime[team]>1.65){shots[team]++;if(overtime)overtimeShots[team]++;lastShotTime[team]=matchElapsed;}
+   return;
+ }
+ if(mode==='hoops'){
+   if(ball.vz*attack>135&&ball.vy>110&&Math.abs(ball.x)<GW+160&&Math.abs(ball.z-attack*(FL-HOOP_OFFSET))<1000&&matchElapsed-lastShotTime[team]>1.65){shots[team]++;if(overtime)overtimeShots[team]++;lastShotTime[team]=matchElapsed;}
+   return;
+ }
  const forwardSpeed=ball.vz*attack;
  if(forwardSpeed<125||matchElapsed-lastShotTime[team]<1.65)return;
  const goalZ=attack*(FL-ball.r);
@@ -1764,7 +1857,10 @@ function touchCar(c){
   let dx=ball.x-c.x,dy=ball.y-(c.y+16),dz=ball.z-c.z;
   let distance=Math.hypot(dx,dy,dz),min=ball.r+32;
   if(distance>=min)return;
-  if(typeof mode==='number')lastTouch={name:c.name,team:c.team};
+  if(competitiveMode())lastTouch={name:c.name,team:c.team};
+  if(mode==='heatseeker'){
+   seekerTeam=c.team;seekerTouches++;seekerSpeed=Math.min(980,470+seekerTouches*75);
+  }
   if(c===player&&mode==='saves'&&training.active)training.touched=true;
   let forward=FORWARD.clone().applyQuaternion(c.q);
   let nx=distance>1?dx/distance:forward.x;
@@ -1795,20 +1891,69 @@ function touchCar(c){
       ball.vy=Math.max(ball.vy,85); // elevated clear, not another own-goal tap
     }
   }
+  if(mode==='hoops'&&c!==player){
+    const attack=c.team===0?-1:1;
+    const hoopZ=attack*(FL-HOOP_OFFSET);
+    // AI lofts offensive touches toward an actual elevated rim, not an invisible goal box.
+    if(ball.z*attack>FL*.12&&Math.abs(ball.z-hoopZ)<1100){
+      const travel=clamp(Math.abs(hoopZ-ball.z)/390,.85,1.75);
+      const miss=(Math.random()-.5)*110;
+      ball.vx=clamp((miss-ball.x)/travel,-470,470);
+      ball.vz=clamp((hoopZ-ball.z)/travel,-610,610);
+      ball.vy=clamp((HOOP_Y-ball.y+230*travel*travel)/travel,290,650);
+    }
+  }
   ball.x=c.x+nx*(min+.5);ball.y=c.y+16+ny*(min+.5);ball.z=c.z+nz*(min+.5);
   registerShot(c);
 }
 function updateBall(dt){
- ball.vy-=460*dt;
+ const previousY=ball.y;
+ if(mode==='heatseeker'){
+  // A touch directs the ball toward the OTHER side; each touch raises the pace.
+  // A gentle automatic kickoff launch prevents a stationary deadlock.
+  if(seekerTeam===null&&kickoffAge>2.0&&!seekerKickoffReady){
+    seekerKickoffReady=true;seekerTeam=(kickoffNumber%2);seekerSpeed=450;
+  }
+  if(seekerTeam!==null){
+   const targetZ=seekerTeam===0?-FL:FL;
+   const aimX=clamp(-ball.x*.52,-GW*.45,GW*.45);
+   const aimY=clamp(GH*.50+Math.abs(ball.z/FL)*GH*.05,ball.r+32,GH-ball.r-18);
+   const dx=aimX-ball.x,dz=targetZ-ball.z,dy=aimY-ball.y;
+   const distance=Math.hypot(dx,dy,dz)||1;
+   const targetSpeed=seekerSpeed;
+   const steering=1-Math.exp(-2.6*dt);
+   ball.vx+=(dx/distance*targetSpeed-ball.vx)*steering;
+   ball.vz+=(dz/distance*targetSpeed-ball.vz)*steering;
+   ball.vy+=(dy/distance*targetSpeed-ball.vy)*steering;
+  }
+ }
+ ball.vy-=(mode==='heatseeker'?80:460)*dt;
  ball.x+=ball.vx*dt;ball.z+=ball.vz*dt;ball.y+=ball.vy*dt;
  ball.vx*=Math.exp(-.20*dt);ball.vz*=Math.exp(-.20*dt);
  // Resolve goals BEFORE the end wall. Do not make a phantom wall in the net.
- const crossed=Math.abs(ball.z)>FL-ball.r;
- const throughMouth=Math.abs(ball.x)<GW-ball.r-3&&ball.y+ball.r<GH-3;
- if(crossed&&throughMouth){
-  if(typeof mode==='number')goal(ball.z<0?0:1);
-  else trainingGoal(ball.z<0?0:1);
-  return;
+ if(mode==='hoops'){
+   for(const hoop of hoopRims){
+    // A basket counts only on a DOWNWARD center crossing inside the rim.
+    const rimDistance=Math.hypot(ball.x-hoop.x,ball.z-hoop.z);
+    if(previousY>hoop.y&&ball.y<=hoop.y&&ball.vy<0&&rimDistance<HOOP_RADIUS-ball.r*.63){
+      goal(hoop.team);return;
+    }
+    // Ring collision can bounce wide shots away. Clear shots pass through the opening.
+    const ringDistance=Math.abs(rimDistance-HOOP_RADIUS);
+    if(Math.abs(ball.y-hoop.y)<ball.r*.78&&ringDistance<ball.r*.65&&ball.vy<0){
+      ball.vy=Math.abs(ball.vy)*.53+60;
+      const nx=(ball.x-hoop.x)/(rimDistance||1),nz=(ball.z-hoop.z)/(rimDistance||1);
+      ball.vx+=nx*80;ball.vz+=nz*80;
+    }
+   }
+ }else{
+   const crossed=Math.abs(ball.z)>FL-ball.r;
+   const throughMouth=Math.abs(ball.x)<GW-ball.r-3&&ball.y+ball.r<GH-3;
+   if(crossed&&throughMouth){
+    if(competitiveMode())goal(ball.z<0?0:1);
+    else trainingGoal(ball.z<0?0:1);
+    return;
+   }
  }
  if(ball.y<ball.r){
   ball.y=ball.r;
@@ -2094,9 +2239,9 @@ if((mode==='shots'||mode==='saves')&&!training.active){
   return;
 }
 replayClock+=dt;
-if(typeof mode==='number'){matchElapsed+=dt;kickoffAge+=dt;}
+if(competitiveMode()){matchElapsed+=dt;kickoffAge+=dt;}
 updateDemoState(dt);
-if(typeof mode==='number'){
+if(competitiveMode()){
  if(time>0){
    time=Math.max(0,time-dt);
    if(time===0){
@@ -2204,6 +2349,7 @@ let clock=new THREE.Clock();function frame(){
 }
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);setQuality(quality)});
 for(const button of document.querySelectorAll('.modeChoice'))button.addEventListener('click',()=>configureMode(/^\d+$/.test(button.dataset.mode)?Number(button.dataset.mode):button.dataset.mode));
+document.getElementById('shuffleAI').addEventListener('click',()=>{if(competitiveMode()){rosterPreparedForMode=null;configureMode(mode);}});
 for(const button of document.querySelectorAll('.carChoice'))button.addEventListener('click',()=>selectCar(button.dataset.car));
 for(const button of document.querySelectorAll('.explosionChoice'))button.addEventListener('click',()=>chooseExplosion(button.dataset.explosion));
 for(const [key,id] of [['car','carColor'],['goal','goalColor'],['explosion','explosionColor']]){
@@ -2247,7 +2393,7 @@ onlineToggle.addEventListener('change',()=>{
  else configureMode(mode);
 });
 for(const button of document.querySelectorAll('.modeChoice'))button.addEventListener('click',()=>{
- if(typeof mode!=='number'&&onlineToggle.checked){
+ if(!competitiveMode()&&onlineToggle.checked){
    onlineToggle.checked=false;
    onlineMessage.textContent='Training is offline; choose 1v1, 2v2 or 3v3 for an online match.';
  }
