@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: fox-rocket-arena-roberto6723
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python multiplayer_server.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"

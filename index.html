@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fox Rocket Arena — Heatseeker, Hoops & Matchup Preview</title>
+<title>Fox Rocket Arena — Public Online Matchmaking</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121d;color:white;font-family:system-ui,Arial,sans-serif}canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:17px;padding:9px 24px;border:1px solid #ffffff3b;background:#061321dd;border-radius:16px;box-shadow:0 8px 24px #0008;font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.orange{color:#ff9b43}.blue{color:#51baff}#clock{font-size:21px;color:#f8fcff}#info{position:absolute;left:20px;top:18px;background:#071321b8;padding:12px 16px;border-radius:13px;font-size:13px;line-height:1.75;max-width:270px}#boost{position:absolute;bottom:24px;right:24px;width:180px;padding:13px;background:#071321d8;border:1px solid #fff3;border-radius:12px;font-weight:800}#track{height:13px;margin-top:8px;background:#21313f;border-radius:12px;overflow:hidden}#fill{height:100%;width:100%;background:linear-gradient(90deg,#f89c2d,#ffe066)}#flight{position:absolute;bottom:24px;left:20px;background:#071321d8;border:1px solid #ffffff35;padding:10px 15px;border-radius:12px;font-size:13px;line-height:1.55;font-weight:750;text-shadow:0 1px 2px #0009}#flight b{color:#81d6ff}#banner{position:absolute;top:42%;width:100%;text-align:center;font-weight:1000;font-size:clamp(32px,6vw,74px);text-shadow:0 5px 12px #000;display:none}#camState{position:absolute;right:20px;top:20px;padding:9px 14px;background:#071321d8;border:1px solid #ffffff38;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #0008;white-space:nowrap}#camState.off{color:#ffe49f}#camState.on{color:#8cddff}#replayBadge{display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);width:min(350px,78vw);text-align:center;padding:10px 15px;background:#071321eb;border:1px solid #94d2ff91;border-radius:12px;box-shadow:0 5px 22px #0008;font-weight:900;letter-spacing:.09em;color:#e9f7ff}#replayBadge small{display:block;margin:3px 0 8px;font-size:11px;font-weight:600;letter-spacing:.03em;color:#bfd0e1}#replayTrack{height:5px;border-radius:5px;background:#344c60;overflow:hidden}#replayFill{width:0%;height:100%;background:linear-gradient(90deg,#ffad59,#5cbcff)}#warning{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#04111ce8;padding:30px;text-align:center;pointer-events:auto}#warning div{max-width:580px;line-height:1.7}#warning a{color:#5ac6ff}@media(max-width:720px){#camState{top:10px;right:12px;font-size:11px;padding:7px 10px}#info{top:auto;bottom:18px;left:12px;font-size:11px;padding:9px}#top{top:10px;font-size:21px;padding:8px 13px;gap:10px}#clock{font-size:15px}#boost{bottom:18px;right:12px;width:120px;font-size:12px}#flight{left:12px;bottom:86px;font-size:11px;padding:7px}}
@@ -196,6 +196,17 @@ canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:non
 #lobbyQualityRow button{background:#0b2437;color:#dceefe;border:1px solid #7c9db9;border-radius:10px;min-height:42px;padding:8px 12px;font-weight:850;cursor:pointer;touch-action:manipulation}
 #lobbyQualityRow button[aria-pressed="true"]{border-color:#ffc278;background:#583c24;color:#fff}
 #lobbyQualityNote{font-size:11px;color:#bdcfe0;flex-basis:100%}
+/* Public online matchmaking with real human player counter */
+.onlineChoice{display:grid!important;gap:11px;margin:18px 0}
+.onlineChoice[hidden]{display:grid!important}
+#onlineCount{font-size:clamp(19px,2.8vw,27px);color:#a2f1b4;font-weight:1000}
+#onlineStatusIndicator{font-size:12px;color:#b5d5e9;line-height:1.5}
+#serverConfigRow{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+#serverConfigRow label{font-size:12px;min-width:110px}
+#onlineServerURL{flex:1;min-width:min(230px,100%);padding:12px;color:white;background:#0a1e30;border:1px solid #73bfee;border-radius:10px;font-size:13px}
+#saveServer{min-height:44px;background:#146a92;color:white;font-weight:900;border:1px solid #80c8f3;border-radius:10px;padding:9px 14px;touch-action:manipulation}
+#onlineModeNote{color:#b6d7e8;font-size:12px;line-height:1.5}
+#liveCountLabel{font-size:12px;color:#b3d8ed}
 /* Special modes and next-match lineup */
 .specialModes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .specialModes .modeChoice{border-color:#5cb4ea8c;background:linear-gradient(125deg,#0f3852,#19223a)}
@@ -306,10 +317,14 @@ canvas,#hud,#touchControls,#driveJoystick,#touchControls button{touch-action:non
     <div class="previewItem"><div class="previewGoal"></div><span>HOME GOAL</span></div>
     <div class="previewItem"><div class="previewBoom"></div><span id="previewEffectName">SUPERNOVA</span></div>
   </div>
-  <div class="onlineChoice" hidden>
-    <label class="onlineMain"><input type="checkbox" id="onlineToggle"> <span><b>PLAY ONLINE</b><small>Match with real players. Unfilled car slots become AI teammates or opponents.</small></span></label>
-    <div class="onlineRoom"><label for="roomCode">FRIENDS ROOM CODE <small>(optional)</small></label><input id="roomCode" maxlength="8" placeholder="Leave blank for public matchmaking" autocapitalize="characters" autocomplete="off" spellcheck="false"><small>To play with a friend, both enter the same code and select the same mode.</small></div>
-    <div id="onlineMessage" role="status" aria-live="polite">Offline practice also works without a multiplayer server.</div>
+  <div class="onlineChoice" id="publicOnlinePanel">
+    <div><span id="onlineCount">—</span> <span id="liveCountLabel">people online worldwide</span></div>
+    <div id="onlineStatusIndicator" aria-live="polite">Connecting to the multiplayer server…</div>
+    <label class="onlineMain"><input type="checkbox" id="onlineToggle"> <span><b>🌐 FIND PUBLIC ONLINE MATCH</b><small>Automatically matches real players worldwide. AI fills the remaining slots.</small></span></label>
+    <div id="onlineModeNote">Public matchmaking: 1v1, 2v2, or 3v3. Heatseeker, Hoops, and Training remain offline for now.</div>
+    <div id="serverConfigRow"><label for="onlineServerURL">SERVER ADDRESS</label><input id="onlineServerURL" aria-label="Public multiplayer server address" type="url" spellcheck="false" autocomplete="url" placeholder="https://your-service.onrender.com"><button type="button" id="saveServer">SAVE SERVER</button></div>
+    <div id="onlineMessage" role="status" aria-live="polite">You can play offline even if the server is not hosted yet.</div>
+    <input type="hidden" id="roomCode" value="">
   </div>
   <div class="lobbyActions"><div class="lobbyHint">WASD or arrow keys drive & steer · SPACE twice + arrow direction to dodge · F aerial · SHIFT boost · Z air roll left · X air roll right (E also works) · Q ball cam<br>Training: N next drill · Free Play: C place ball, V stop, B launch. ENTER skips replays. Roll ball up a curved wall, jump off and boost to air-dribble. Free Play: T sets up a wall dribble.</div><button id="startGame" class="startBtn" type="button">▶ START MATCH</button></div>
  </div>
@@ -716,7 +731,7 @@ const player=playerModels.fox;player.team=0;player.mesh.visible=true;
 let selectedCar='fox';
 // sessionStorage is tab-scoped: a refresh retains the name, but a newly opened
 // tab starts with the default. No cookie, localStorage or server is involved.
-// Offline 1v1/2v2/3v3 are AI matches. Online hosting will be added separately later.
+// Offline 1v1/2v2/3v3 remain AI matches; public online matches use the separate game server.
 const PLAYER_NAME_KEY='foxRocketArena.playerName';
 function cleanPlayerName(value){return String(value??'').replace(/[\u0000-\u001f\u007f]/g,'').slice(0,16).trim()||'YOU';}
 function loadPlayerName(){try{return cleanPlayerName(sessionStorage.getItem(PLAYER_NAME_KEY)||'YOU')}catch{return 'YOU'}}
@@ -2376,8 +2391,8 @@ playerNameInput.addEventListener('keydown',e=>{
 document.getElementById('saveName').addEventListener('click',()=>{
  commitPlayerName();playerNameInput.blur();
 });
-document.getElementById('startGame').addEventListener('click',startMatch);
-document.getElementById('playAgain').addEventListener('click',startMatch);
+document.getElementById('startGame').addEventListener('click',()=>{if(onlineToggle.checked)joinOnline();else startMatch();});
+document.getElementById('playAgain').addEventListener('click',()=>{if(onlineActive)openLobby();else startMatch();});
 document.getElementById('returnLobby').addEventListener('click',openLobby);
 document.getElementById('lobbyButton').addEventListener('click',openLobby);
 // -------------------------------------------------------------
@@ -2388,16 +2403,84 @@ const onlineToggle=document.getElementById('onlineToggle');
 const onlineMessage=document.getElementById('onlineMessage');
 const onlineStart=document.getElementById('startGame');
 const onlineBadge=document.getElementById('onlineBadge');
+const onlineCountNode=document.getElementById('onlineCount');
+const onlineStateNode=document.getElementById('onlineStatusIndicator');
+const onlineServerBox=document.getElementById('onlineServerURL');
+const DEFAULT_PUBLIC_SERVER='https://fox-rocket-arena-roberto6723.onrender.com';
+const onlineParams=new URLSearchParams(location.search);
+const queryServer=onlineParams.get('server');
+function normalizedServer(raw){
+ try{let u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return null;
+   return u.origin;
+ }catch(_){return null;}
+}
+let storedServer=null;
+try{storedServer=localStorage.getItem('foxPublicServer');}catch(_){}
+let multiplayerServer=normalizedServer(queryServer||storedServer||DEFAULT_PUBLIC_SERVER)||DEFAULT_PUBLIC_SERVER;
+onlineServerBox.value=multiplayerServer;
+let presenceWS=null;
+let onlineStatusClock=null;
+function closePresence(){if(presenceWS){let ws=presenceWS;presenceWS=null;ws.onclose=null;ws.close();}}
+function startPresence(){
+ if(onlineActive||onlineConnecting||document.hidden||presenceWS&&presenceWS.readyState<=1)return;
+ let endpoint=multiplayerServer.replace(/^http/,'ws')+'/presence';
+ try{
+  let ws=new WebSocket(endpoint);presenceWS=ws;
+  ws.onopen=()=>{if(presenceWS===ws)onlineStateNode.textContent='Server online · worldwide matchmaking available';};
+  ws.onclose=()=>{if(presenceWS===ws){presenceWS=null;onlineStateNode.textContent='Server offline or starting up · offline games still work';}};
+ }catch(_){onlineStateNode.textContent='Server not available yet · offline games still work';}
+}
+async function refreshGlobalCount(){
+ try{
+  const ctrl=new AbortController();
+  let timeout=setTimeout(()=>ctrl.abort(),6500);
+  const res=await fetch(multiplayerServer+'/status',{cache:'no-store',signal:ctrl.signal});clearTimeout(timeout);
+  if(!res.ok)throw new Error('Server unreachable');
+  const data=await res.json();
+  if(!Number.isInteger(data.onlinePlayers))throw new Error('Invalid server status');
+  onlineCountNode.textContent=String(data.onlinePlayers);
+  onlineStateNode.textContent=`${data.inMatches} in matches · ${data.inLobby} in lobby · ${data.activeMatches} public matches`;
+  startPresence();
+ }catch(_){onlineCountNode.textContent='—';onlineStateNode.textContent='Multiplayer server unavailable or waking up. Offline play still works.';}
+}
+function savePublicServer(){
+ const normalized=normalizedServer(onlineServerBox.value.trim());
+ if(!normalized){onlineStatus('Enter a full https://... server address.',true);return;}
+ multiplayerServer=normalized;onlineServerBox.value=normalized;
+ try{localStorage.setItem('foxPublicServer',normalized);}catch(_){ }
+ closePresence();refreshGlobalCount();onlineStatus('Server address saved.');
+}
+document.getElementById('saveServer').addEventListener('click',savePublicServer);
+if(queryServer&&normalizedServer(queryServer)){try{localStorage.setItem('foxPublicServer',multiplayerServer);}catch(_){}}
+async function initializePublicServer(){
+ // One tiny editable file configures the server address for every website visitor.
+ // A personal setting or the ?server= query parameter takes priority.
+ if(!queryServer&&!storedServer){
+  try{
+   const response=await fetch('./multiplayer-config.json',{cache:'no-store'});
+   if(response.ok){
+    const config=await response.json();
+    const server=normalizedServer(config.server);
+    if(server){multiplayerServer=server;onlineServerBox.value=server;}
+   }
+  }catch(_){}
+ }
+ refreshGlobalCount();
+}
+initializePublicServer();onlineStatusClock=setInterval(refreshGlobalCount,12000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)closePresence();else refreshGlobalCount();});
 onlineToggle.addEventListener('change',()=>{
  if(onlineToggle.checked&&typeof mode!=='number')configureMode(1);
  else configureMode(mode);
+ onlineStart.textContent=onlineToggle.checked?'🌐 FIND PUBLIC MATCH':'▶ START MATCH';
 });
 for(const button of document.querySelectorAll('.modeChoice'))button.addEventListener('click',()=>{
- if(!competitiveMode()&&onlineToggle.checked){
+ if(typeof mode!=='number'&&onlineToggle.checked){
    onlineToggle.checked=false;
    onlineMessage.textContent='Training is offline; choose 1v1, 2v2 or 3v3 for an online match.';
  }
  configureMode(mode);
+ if(onlineToggle.checked)onlineStart.textContent='🌐 FIND PUBLIC MATCH';
 });
 function onlineStatus(message,bad=false){
  onlineMessage.textContent=message;
@@ -2411,18 +2494,20 @@ function leaveOnline(){
  onlineStart.disabled=false;
  onlineStart.style.opacity='1';
  onlineReplayExplosion=null;
+ startPresence();refreshGlobalCount();
  document.getElementById('attackingGoal').textContent='Your team attacks the blue goal';applyColors();
 }
 function joinOnline(){
  if(onlineConnecting||onlineActive)return;
  const name=setPlayerName(document.getElementById('playerName').value);
- const code=document.getElementById('roomCode').value.trim().toUpperCase();
+ const code='';
  if(code&&!/^[A-Z0-9]{3,8}$/.test(code)){
    onlineStatus('Enter 3–8 letters/numbers for a private room, or leave the box blank.',true);return;
  }
  onlineConnecting=true;onlineStart.disabled=true;onlineStart.style.opacity='.55';
  onlineStatus('Connecting to multiplayer server…');
- const url=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';
+ closePresence();
+ const url=multiplayerServer.replace(/^http/,'ws')+'/ws';
  let ws;
  try{ws=new WebSocket(url);}catch(err){
    onlineConnecting=false;onlineStart.disabled=false;onlineStatus('Cannot connect: '+err.message,true);return;
@@ -2440,14 +2525,14 @@ function joinOnline(){
      mode=msg.mode;configureMode(mode);startMatch();
      onlineActive=true;paused=false;onlineSlot=msg.slot;onlineRoom=msg.room;
      onlineLastGoalId=msg.state.goalId;onlineLastPhase=msg.state.phase;applyColors();
-     onlineLatest=msg.state;onlineInputClock=0;
+     onlineLatest=msg.state;onlineInputClock=0;onlineWinnerShown=false;
      onlineStatus('Connected to '+onlineRoom);
      initOnlineModels(msg.state);applyOnlineState(msg.state,true);
      replayHistory=[];replayClock=0;lastReplaySample=-Infinity;
      onlineBadge.style.display='block';
-     onlineBadge.textContent=`ONLINE · ROOM ${onlineRoom} · Waiting for players / AI`;
+     onlineBadge.textContent=`🌎 PUBLIC · ${mode}v${mode} · Connecting players + AI`;
      document.getElementById('attackingGoal').textContent=onlineSlot%2?'Your team attacks the orange goal':'Your team attacks the blue goal';
-     show('ROOM '+onlineRoom+' · ONLINE MATCH',2.4);
+     show('PUBLIC ONLINE MATCH · '+mode+'v'+mode,2.4);
      return;
    }
    if(msg.type==='state'&&onlineActive){
@@ -2455,13 +2540,14 @@ function joinOnline(){
      if(msg.goalId>onlineLastGoalId&&msg.goal){onlineLastGoalId=msg.goalId;onlineGoal(msg.goal);}
    }
  };
- ws.onerror=()=>{if(!onlineActive)onlineStatus('Connection failed. Run python3 multiplayer_server.py (not http.server).',true)};
+ ws.onerror=()=>{if(!onlineActive)onlineStatus('Cannot reach public game server. Check the server address or its deployment.',true)};
  ws.onclose=()=>{
    if(onlineWS!==ws)return;
    if(onlineActive){openLobby();onlineStatus('Connection to the online room was lost. You can reconnect.',true);}
    else {onlineConnecting=false;onlineStart.disabled=false;onlineStart.style.opacity='1';
       if(!onlineMessage.textContent.includes('failed')&&!onlineMessage.textContent.includes('room')&&!onlineMessage.textContent.includes('Enter'))
-       onlineStatus('Multiplayer server unavailable. Start python3 multiplayer_server.py.',true);
+       onlineStatus('Multiplayer server unavailable. Check the server address.',true);
+      refreshGlobalCount();
    }
  };
 }
@@ -2491,7 +2577,7 @@ function onlineQuaternion(s){
  return onlineTurn.multiply(onlinePitch).multiply(onlineRoll).normalize();
 }
 function applyOnlineState(s,immediate=false){
- score=[...s.score];time=s.time;finished=s.phase==='finished';
+ score=[...s.score];time=s.time;finished=s.phase==='finished';overtime=!!s.overtime;shots=s.shots||[0,0];
  for(const p of s.cars){
    const c=p.slot===onlineSlot?player:remoteCarFor(p);
    if(!c)continue;
@@ -2516,12 +2602,30 @@ function applyOnlineState(s,immediate=false){
  }
  onlineLastPhase=s.phase;
  const humans=s.cars.filter(c=>c.human).length;
- onlineBadge.textContent=`ONLINE · ROOM ${onlineRoom} · ${mode}v${mode} · ${humans} human${humans===1?'':'s'} + ${s.cars.length-humans} AI`;
+ onlineBadge.textContent=`🌎 PUBLIC · ${s.onlinePlayers??'?'} online · ${mode}v${mode} · ${humans} people + ${s.cars.length-humans} AI`;
  document.getElementById('modeHud').textContent=`${mode}v${mode} · ${s.cars.filter(c=>c.team===player.team).map(c=>c.name).join(' + ')} vs ${s.cars.filter(c=>c.team!==player.team).map(c=>c.name).join(' + ')}`;
- if(s.phase==='finished'&&!replayActive&&!goalPause){
-   show(score[0]===score[1]?'DRAW!':score[player.team]>score[1-player.team]?'YOUR TEAM WINS!':'OTHER TEAM WINS!',1.4);
+ if(s.phase==='finished'&&!replayActive&&!goalPause&&!onlineWinnerShown&&s.winner!==null){
+   onlineWinnerShown=true;
+   onlineShowWinner(s);
  }
  updateHud();
+}
+let onlineWinnerShown=false;
+function onlineShowWinner(s){
+ const team=s.winner;
+ const title=document.getElementById('winnerTitle');
+ title.textContent=(team===0?'ORANGE':'BLUE')+' TEAM WINS!';
+ title.style.color=team===0?'#ffad64':'#78cbff';
+ document.getElementById('winnerScore').textContent=s.score.join(' — ')+(s.overtime?' · OT':'');
+ document.getElementById('winnerReason').textContent=(s.winReason||'FINAL SCORE')+` · SHOTS: ${s.shots.join(' — ')}`;
+ const podium=document.getElementById('winnerPlayers');podium.replaceChildren();
+ for(const car of s.cars.filter(c=>c.team===team)){
+  let card=document.createElement('div');card.className='winnerPlayer';
+  let name=document.createElement('b');name.textContent=car.name;
+  let status=document.createElement('span');status.textContent=car.human?'PLAYER':'AI';
+  card.append(name,status);podium.append(card);
+ }
+ document.getElementById('winnerScreen').hidden=false;
 }
 function onlineGoal(g){
  if(inLobby)return;
@@ -2542,8 +2646,11 @@ function sendOnlineInput(dt){
  if(onlineInputClock<.05)return;
  onlineInputClock=0;
  if(!onlineWS||onlineWS.readyState!==WebSocket.OPEN)return;
- const input={type:'input',up:!!(keys.w||keys.arrowup),down:!!(keys.s||keys.arrowdown),
-    left:!!(keys.a||keys.arrowleft),right:!!(keys.d||keys.arrowright),
+ const analogThrottle=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);
+ const analogSteer=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+ const input={type:'input',throttle:analogThrottle||-joystick.y,steer:analogSteer||joystick.x,
+    up:!!(keys.w||keys.arrowup||joystick.y<-.15),down:!!(keys.s||keys.arrowdown||joystick.y>.15),
+    left:!!(keys.a||keys.arrowleft||joystick.x<-.15),right:!!(keys.d||keys.arrowright||joystick.x>.15),
     boost:!!keys.shift,auto:!!keys.f,rollLeft:!!keys.z,
     rollRight:!!(keys.x||keys.e),jump:jumpQueued};
  jumpQueued=false;
